@@ -13,7 +13,8 @@
 ---
 
 ## Current Status
-- Supabase: NOT YET INITIALIZED
+
+- Supabase: LOCAL CLI INITIALIZED (`supabase init` + `supabase start`; keys in `.env.local`)
 - Directus: NOT YET INSTALLED
 - Existing backend: `backend/` with FastAPI + ARQ. Schema migrations exist in `supabase/migrations/20260319180000_races_candidates.sql`.
 
@@ -24,6 +25,7 @@
 **Objective:** Set up `supabase/` directory, verify Docker is available, confirm CLI version.
 
 **Files:**
+
 - Create: `supabase/` (via CLI)
 - Create: `supabase/config.toml` (via CLI)
 - Create: `.gitignore` update for Supabase secrets
@@ -34,6 +36,7 @@
 supabase --version        # should be >= 2.x
 docker info               # Docker must be running
 ```
+
 Expected: version printed, Docker running.
 
 **Step 2: Initialize Supabase**
@@ -41,6 +44,7 @@ Expected: version printed, Docker running.
 ```bash
 supabase init
 ```
+
 Expected: `supabase/config.toml` created. Accept defaults. Do NOT manually edit `config.toml` yet.
 
 **Step 3: Start local Supabase stack**
@@ -48,7 +52,9 @@ Expected: `supabase/config.toml` created. Accept defaults. Do NOT manually edit 
 ```bash
 supabase start
 ```
+
 Expected output contains:
+
 ```
 API URL: http://127.0.0.1:54321
 DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
@@ -56,6 +62,7 @@ Studio URL: http://127.0.0.1:54323
 anon key: eyJ...
 service_role key: eyJ...
 ```
+
 Save the anon and service_role keys to `.env.local` (never commit).
 
 **Step 4: Verify Studio**
@@ -78,7 +85,7 @@ git add supabase/config.toml .gitignore
 git commit -m "feat: initialize supabase cli project"
 ```
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -87,6 +94,7 @@ git commit -m "feat: initialize supabase cli project"
 **Objective:** Apply the races/candidates migration that was already written (from Phase 1 backend work) to the fresh local Supabase instance.
 
 **Files:**
+
 - Existing: `supabase/migrations/20260319180000_races_candidates.sql`
 
 **Step 1: Verify migration file exists**
@@ -94,6 +102,7 @@ git commit -m "feat: initialize supabase cli project"
 ```bash
 ls supabase/migrations/
 ```
+
 Expected: `20260319180000_races_candidates.sql` (and any others from Phase 1).
 
 **Step 2: Reset and apply all migrations**
@@ -101,6 +110,7 @@ Expected: `20260319180000_races_candidates.sql` (and any others from Phase 1).
 ```bash
 supabase db reset
 ```
+
 Expected: "Resetting local database…", then "Applying migration 20260319180000_races_candidates…", "Finished".
 
 **Step 3: Verify in Studio**
@@ -118,6 +128,7 @@ In Studio → Authentication → Policies — confirm RLS is listed as enabled f
 **Objective:** Add `jurisdiction_level` enum, `office_type` enum, `jurisdictions` table, and `officials` table. This extends (not replaces) existing `candidates`/`entities`. All new officials/judges point to `entities` graph node.
 
 **Files:**
+
 - Create: `supabase/migrations/20260419000000_jurisdiction_officials.sql`
 
 **Step 1: Create the migration file**
@@ -125,6 +136,7 @@ In Studio → Authentication → Policies — confirm RLS is listed as enabled f
 ```bash
 supabase migration new jurisdiction_officials
 ```
+
 Expected: creates `supabase/migrations/20260419000000_jurisdiction_officials.sql`.
 
 **Step 2: Write the migration**
@@ -248,9 +260,11 @@ CREATE TRIGGER set_updated_at_officials
 ```bash
 supabase db reset
 ```
+
 Expected: all migrations apply cleanly including the new one.
 
 **Step 4: Verify in Studio**
+
 - Tables `jurisdictions` (4 seed rows) and `officials` (empty) appear.
 - Types `jurisdiction_level` and `office_type` appear under Database → Types.
 
@@ -259,6 +273,7 @@ Expected: all migrations apply cleanly including the new one.
 ```bash
 supabase db diff
 ```
+
 Expected: no diff (schema matches migrations).
 
 **Step 6: Commit**
@@ -277,6 +292,7 @@ git commit -m "feat: add jurisdiction hierarchy and officials table with RLS"
 **Objective:** Create a dedicated `directus_user` Postgres role with minimal grants so Directus connects safely without full superuser access. Directus system tables go in a `directus` schema to avoid polluting `public`.
 
 **Files:**
+
 - Create: `supabase/migrations/20260419000001_directus_role_grants.sql`
 
 **Step 1: Create migration**
@@ -326,6 +342,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 ```bash
 supabase db reset
 ```
+
 Expected: all 3 migrations apply cleanly.
 
 **Step 4: Verify role exists**
@@ -348,6 +365,7 @@ git commit -m "feat: create directus_user role and schema isolation"
 **Objective:** Add Directus to `docker-compose.yml` alongside Supabase local stack. Directus connects to the same Postgres DB on the `directus` schema. Self-hosted, no cloud dependency.
 
 **Files:**
+
 - Create: `docker-compose.yml` (project root, alongside Supabase)
 - Create: `cms/.env` (gitignored, Directus env)
 - Create: `cms/` directory
@@ -359,6 +377,7 @@ mkdir cms
 ```
 
 Create `cms/.env` (gitignore this file):
+
 ```ini
 # Directus CMS environment
 DB_CLIENT=pg
@@ -386,6 +405,7 @@ PORT=8055
 cd cms
 bunx create-directus-project@latest .
 ```
+
 Or, for pure Docker approach, create `docker-compose.yml` at project root:
 
 ```yaml
@@ -430,6 +450,7 @@ DIRECTUS_URL=http://localhost:8055
 ```bash
 docker compose up directus -d
 ```
+
 Expected: Directus starts, visits `http://localhost:8055`. Login with admin email/password from `.env.local`.
 
 **Step 5: Verify Directus sees our schema**
@@ -441,6 +462,7 @@ In Directus admin: Settings → Data Model. Should see `jurisdictions`, `officia
 git add docker-compose.yml cms/.env.example
 git commit -m "feat: add directus docker compose for local cms"
 ```
+
 (Commit `.env.example` with placeholder values, never actual `.env`).
 
 - **Status:** pending
@@ -452,6 +474,7 @@ git commit -m "feat: add directus docker compose for local cms"
 **Objective:** Configure Directus to treat `jurisdictions`, `officials`, `entities`, `dossier_claims`, and `rag_chunks` as first-class collections with proper display fields, relations, and interface hints.
 
 **Files:**
+
 - Create: `cms/schema/` directory with Directus schema snapshots
 - Modify: Directus admin UI (or use Directus Schema API for code-driven config)
 
@@ -467,11 +490,13 @@ mkdir -p cms/schema
 # Using Directus CLI
 bunx directus schema snapshot ./cms/schema/snapshot.yaml
 ```
+
 Expected: `snapshot.yaml` created with current Directus model config.
 
 **Step 3: Configure collections via Directus Admin UI**
 
 In Directus admin → Settings → Data Model:
+
 - `officials`: Set display template `{{full_name}} — {{office_type}}`. Add relations: `jurisdiction_id → jurisdictions`, `entity_id → entities`.
 - `jurisdictions`: Set display template `{{name}} ({{level}})`. Enable tree view for parent_id hierarchy.
 - `entities`: Set display template `{{canonical_name}} [{{type}}]`.
@@ -499,6 +524,7 @@ git commit -m "feat: directus collections configured for officials hierarchy"
 **Objective:** Create a Directus Flow that fires when an official is saved/updated, POSTing to the backend worker API to trigger a dossier refresh. This is the Palantir automation hook — edits in CMS → intelligence pipeline runs.
 
 **Files:**
+
 - Create: `cms/extensions/flows/llm-refresh-trigger/` (scaffolded)
 
 **Step 1: Scaffold extension**
@@ -507,6 +533,7 @@ git commit -m "feat: directus collections configured for officials hierarchy"
 cd cms
 npx create-directus-extension@latest
 ```
+
 Select: `type: hook`, `name: llm-refresh-trigger`, `language: typescript`.
 Expected: `cms/extensions/hooks/llm-refresh-trigger/` created with `src/index.ts`.
 
@@ -548,6 +575,7 @@ export default config;
 cd cms/extensions/hooks/llm-refresh-trigger
 bun run build
 ```
+
 Expected: compiled output in `dist/`.
 
 **Step 4: Restart Directus to pick up extension**
@@ -575,6 +603,7 @@ git commit -m "feat: directus hook triggers llm dossier refresh on official upda
 **Objective:** Update existing FastAPI backend to use the new local Supabase URL + keys, and add a stub endpoint for the Directus webhook (`POST /v1/intelligence/refresh`) so the flow trigger from Task 7 works end-to-end.
 
 **Files:**
+
 - Modify: `backend/briefing/config.py` (add new env vars for officials/jurisdictions)
 - Modify: `backend/briefing/api/routes/intelligence.py` (or create if not exists)
 
@@ -634,6 +663,7 @@ curl -X POST http://localhost:8000/v1/intelligence/refresh \
   -H "Content-Type: application/json" \
   -d '{"official_id": "test-123", "trigger": "manual"}'
 ```
+
 Expected: `{"job_id": null, "official_id": "test-123", "status": "queued"}`.
 
 **Step 5: Commit**
@@ -650,6 +680,7 @@ git commit -m "feat: add intelligence refresh stub route for directus webhook"
 ## Summary & Next Steps
 
 After completing Tasks 1-8:
+
 - Supabase local stack running with full schema (races, candidates, entities, jurisdictions, officials, directus grants).
 - Directus running via Docker, connected to same Postgres, system tables in `directus` schema.
 - Officials hierarchy (jurisdiction_level, office_type enums, jurisdictions seed) ready for data.
@@ -660,6 +691,10 @@ After completing Tasks 1-8:
 **Proceed to:** `plans/01_expanded_silent_briefing_platform_plan.md` Phase 1 (judicial extraction + full LLM pipeline) and Phase 3 (operator console frontend).
 
 ## Errors Encountered
+
+
 | Error | Attempt | Resolution |
-|-------|---------|------------|
-| N/A | - | - |
+| ----- | ------- | ---------- |
+| N/A   | -       | -          |
+
+
