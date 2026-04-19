@@ -13,6 +13,8 @@
 **Phase 1 (backend):** ETL pipeline → Supabase schema → LLM dossiers via Perplexity. FastAPI + ARQ + Supabase.
 **Phase 2 (platform):** Supabase + Directus CMS + Next.js/React operator console + Clerk auth + Palantir graph.
 
+**GitHub:** [silent-briefing/the-silent-briefing](https://github.com/silent-briefing/the-silent-briefing) — canonical remote `origin`.
+
 ---
 
 ## Planning Files
