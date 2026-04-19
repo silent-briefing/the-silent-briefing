@@ -7,6 +7,7 @@
 > **Goal:** Build a comprehensive, self-serve Palantir-for-Utah intelligence platform. Judicial watch (Supreme Court first), evidence-based dossiers with adversarial AI analysis, official/judge hierarchy (federal→state→county→city), entity graph for deep cross-references (judge → opinions → bills → issues → media → posts), CMS admin in Directus for non-technical users, and a premium operator console matching the `@design/` editorial aesthetic. Perplexity is the primary AI provider. Everything cross-referenced, intelligently reported.
 >
 > **Architecture Overview:**
+>
 > - **Schema:** `jurisdictions` (hierarchy) + `officials` (all elected/judges/candidates by type) + existing `entities/entity_edges/dossier_claims/rag_chunks` graph.
 > - **Backend (extend Phase 1):** FastAPI + ARQ. New extraction jobs for utcourts.gov (opinions, bios), Ballotpedia (retention data), vote.utah.gov (filing sync). Two-stage + adversarial LLM pipeline via Perplexity. Abstracted `LLMService` protocol.
 > - **CMS:** Directus (self-hosted Docker) on same Supabase Postgres. Flows trigger LLM refresh on edit. Custom extensions themed to `@design/`. Enables non-dev management of officials, dossiers, claims.
@@ -21,65 +22,71 @@
 
 ## Confirmed Decisions (from user Q&A)
 
-| Question | Answer | Decision |
-|----------|--------|----------|
-| CMS choice | Directus — user agreed, will learn | **Directus** self-hosted via Docker on existing Supabase Postgres |
-| Frontend | Start fresh; OperatorConsole kit is reference only | **New Next.js app** from scratch using design system CSS/assets |
-| Auth | Clerk | **Clerk** for all operator console routes |
-| AI provider | Perplexity for everything; make it easy to swap later | **Perplexity** as primary; abstracted `LLMService` protocol |
-| Adversarial AI | Different pedigree; Claude analysis + Grok adversarial, they debate before human review | **Adversarial pipeline:** Primary (Claude class via Agent API) → Adversarial (Grok class via Agent API) → Synthesis → Human review queue in Directus |
-| Feeds | X + Perplexity | **X API v2** when available + **Perplexity Sonar** for news aggregation; `FeedService` abstraction |
-| Initial focus | Supreme Court flagship, Palantir thinking | **Utah Supreme Court** Judicial Watch page as MVP Palantir demonstration |
-| Schema | Support hierarchies preemptively | `jurisdiction_level` enum + `office_type` enum + `jurisdictions` (parent hierarchy) + `officials` table |
-| Tooling | `bun` not node; `uv` not pip | `bun` everywhere JS/TS; `uv` everywhere Python; `npx` ONLY for Directus extension scaffold |
-| Hosting | Self-hosted for development | Docker Compose: Supabase local + Directus + backend + console |
-| Cheaper AI for correlation | Use cheaper models for bulk edge extraction | `CORRELATION_MODEL=sonar` (cheap); `WRITER_MODEL=claude-sonnet-4-5`; `ADVERSARIAL_MODEL=grok-4` |
+
+| Question                   | Answer                                                                                  | Decision                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CMS choice                 | Directus — user agreed, will learn                                                      | **Directus** self-hosted via Docker on existing Supabase Postgres                                                                                    |
+| Frontend                   | Start fresh; OperatorConsole kit is reference only                                      | **New Next.js app** from scratch using design system CSS/assets                                                                                      |
+| Auth                       | Clerk                                                                                   | **Clerk** for all operator console routes                                                                                                            |
+| AI provider                | Perplexity for everything; make it easy to swap later                                   | **Perplexity** as primary; abstracted `LLMService` protocol                                                                                          |
+| Adversarial AI             | Different pedigree; Claude analysis + Grok adversarial, they debate before human review | **Adversarial pipeline:** Primary (Claude class via Agent API) → Adversarial (Grok class via Agent API) → Synthesis → Human review queue in Directus |
+| Feeds                      | X + Perplexity                                                                          | **X API v2** when available + **Perplexity Sonar** for news aggregation; `FeedService` abstraction                                                   |
+| Initial focus              | Supreme Court flagship, Palantir thinking                                               | **Utah Supreme Court** Judicial Watch page as MVP Palantir demonstration                                                                             |
+| Schema                     | Support hierarchies preemptively                                                        | `jurisdiction_level` enum + `office_type` enum + `jurisdictions` (parent hierarchy) + `officials` table                                              |
+| Tooling                    | `bun` not node; `uv` not pip                                                            | `bun` everywhere JS/TS; `uv` everywhere Python; `npx` ONLY for Directus extension scaffold                                                           |
+| Hosting                    | Self-hosted for development                                                             | Docker Compose: Supabase local + Directus + backend + console                                                                                        |
+| Cheaper AI for correlation | Use cheaper models for bulk edge extraction                                             | `CORRELATION_MODEL=sonar` (cheap); `WRITER_MODEL=claude-sonnet-4-5`; `ADVERSARIAL_MODEL=grok-4`                                                      |
+
 
 ---
 
 ## Current Status
 
-- **Foundation:** NOT STARTED — see `plans/04_foundation_supabase_directus.md` (Tasks 1-8) for Supabase init + Directus setup.
+- **Foundation (Phase 0):** COMPLETE — see `plans/04_foundation_supabase_directus.md` for Supabase migrations, Directus Docker, hook extension, API stub.
 - **Backend Phase 1 (from `plans/00_task_plan.md`):** Steps 0-1 complete (FastAPI skeleton, candidate ETL). Step 2 (entities/claims/vectors) in progress. Running on local FastAPI.
-- **Schema:** `races` + `candidates` live. `entities/entity_edges/dossier_claims/rag_chunks` pending.
-- **New tables needed:** `jurisdictions` + `officials` (defined in `plans/04_foundation_supabase_directus.md` Task 3).
+- **Schema:** `races`, `candidates`, minimal `entities`, `jurisdictions`, `officials` live. `entity_edges`/`dossier_claims`/`rag_chunks`/`intelligence_runs` pending (Phase 1).
 
 ---
 
 ## Phases
 
 ### Phase 0: Foundation Setup (Prerequisite)
+
 > **See `plans/04_foundation_supabase_directus.md` for full task breakdown.**
 
-- [ ] Task 1: `supabase init` + `supabase start`. Keys to `.env.local`.
-- [ ] Task 2: Apply existing races/candidates migration to fresh local instance.
-- [ ] Task 3: `jurisdiction_officials` migration — enums, `jurisdictions`, `officials`, RLS, seed.
-- [ ] Task 4: `directus_role_grants` migration — isolated `directus` schema, minimal Postgres role.
-- [ ] Task 5: Directus Docker Compose — connected to Supabase local Postgres.
-- [ ] Task 6: Directus collections config for officials/jurisdictions/entities/claims.
-- [ ] Task 7: Directus extension — LLM refresh flow trigger on official save.
-- [ ] Task 8: Backend stub endpoint for Directus webhook (`POST /v1/intelligence/refresh`).
-- **Status:** pending
+- [x] Task 1: `supabase init` + `supabase start`. Keys to `.env.local`.
+- [x] Task 2: Apply existing races/candidates migration to fresh local instance.
+- [x] Task 3: `jurisdiction_officials` migration — enums, `jurisdictions`, `officials`, RLS, seed.
+- [x] Task 4: `directus_role_grants` migration — isolated `directus` schema, minimal Postgres role.
+- [x] Task 5: Directus Docker Compose — connected to Supabase local Postgres.
+- [x] Task 6: Directus collections config for officials/jurisdictions/entities/claims.
+- [x] Task 7: Directus extension — LLM refresh flow trigger on official save.
+- [x] Task 8: Backend stub endpoint for Directus webhook (`POST /v1/intelligence/refresh`).
+- **Status:** complete
 - **Blocks all other phases.**
 
 ### Phase 1: Backend — Schema Completion + Judicial Extraction
+
 **Objective:** Complete Step 2 of `plans/00_task_plan.md` (entities/claims/vectors/graph) and extend for judicial extraction. Officials with type `state_supreme_justice` have opinions extracted, chunked, and embedded. Retention election data pulled from Ballotpedia. Two-stage + adversarial LLM pipeline wired.
 
 **Bite-sized Tasks:**
 
 **1.1 — Complete Step 2 schema (from 00_task_plan.md)**
+
 - Migration: `entities`, `entity_edges`, `dossier_claims`, `rag_chunks`, `intelligence_runs` tables.
 - Command: `supabase migration new entities_claims_vectors_graph`
 - Test: Insert a test entity + edge in Studio. Verify pgvector column.
 - Commit: `git commit -m "feat: entities, claims, vectors, intelligence_runs schema"`
 
 **1.2 — Link officials to entities + claims**
+
 - Migration: Add `official_id uuid REFERENCES officials(id)` to `dossier_claims` (complement existing `candidate_id`). Add `officials` as `entity` nodes automatically (trigger or service).
 - Command: `supabase migration new link_officials_to_claims`
 - Test: Create official, verify entity node auto-created.
 - Commit: `git commit -m "feat: link officials to entities graph and dossier_claims"`
 
 **1.3 — Judicial extraction worker job**
+
 - New service: `backend/briefing/services/extraction/judicial.py` (~150 LOC)
 - Sources: `utcourts.gov/courts/sup/` — scrape justices list (Playwright), biography pages (httpx + BeautifulSoup), opinions index.
 - Output: Upsert to `officials` (jurisdiction=`ut`, office_type=`state_supreme_justice`).
@@ -88,18 +95,21 @@
 - Commit: `git commit -m "feat: judicial extraction worker for utah supreme court justices"`
 
 **1.4 — Ballotpedia retention data extraction**
+
 - New service: `backend/briefing/services/extraction/retention.py` (~100 LOC)
 - Scrape Ballotpedia retention election history for justices. Persist as `dossier_claims` with `category='Retention Voting'`.
 - Test: Hagen + Pohlman retention history present in claims.
 - Commit: `git commit -m "feat: ballotpedia retention vote history extraction"`
 
 **1.5 — Opinion chunking + embedding**
+
 - Service: `backend/briefing/services/extraction/opinions.py` (~150 LOC)
 - Scrape opinion text from utcourts.gov, chunk to ~512-1024 tokens, embed via Perplexity embeddings endpoint, upsert to `rag_chunks`.
 - Test: 3 opinions chunked, embeddings present in `rag_chunks`, pgvector ANN query returns relevant chunk.
 - Commit: `git commit -m "feat: opinion chunking and embedding into rag_chunks"`
 
 **1.6 — LLM service abstraction**
+
 - Create: `backend/briefing/services/llm/base.py` — `LLMService` Protocol (~50 LOC)
 - Create: `backend/briefing/services/llm/perplexity.py` — `PerplexityLLMService` implementing Protocol (~120 LOC)
 - Config: `WRITER_MODEL`, `ADVERSARIAL_MODEL`, `CORRELATION_MODEL` from `pydantic-settings`.
@@ -107,6 +117,7 @@
 - Commit: `git commit -m "feat: LLMService abstraction with Perplexity implementation"`
 
 **1.7 — Adversarial dossier pipeline**
+
 - Service: `backend/briefing/services/llm/adversarial_pipeline.py` (~180 LOC)
 - Flow:
   1. `retrieve()` — Sonar for grounded evidence bundle (Stage 1)
@@ -118,6 +129,7 @@
 - Commit: `git commit -m "feat: adversarial dossier pipeline (primary + critique + synthesis)"`
 
 **1.8 — Correlation engine (cheap model, bulk)**
+
 - Service: `backend/briefing/services/llm/correlation.py` (~120 LOC)
 - On new opinion/claim ingestion: call `CORRELATION_MODEL=sonar` to extract entity mentions and propose `entity_edges` (e.g., opinion → bill, opinion → issue, official → official).
 - Confidence threshold: only auto-insert edges above 0.8. Below threshold → stage for human review in Directus.
@@ -125,49 +137,55 @@
 - Commit: `git commit -m "feat: correlation engine proposes entity edges from opinions/claims"`
 
 **1.9 — Schedule orchestration**
+
 - Update ARQ worker to schedule: judicial extraction (weekly), opinion refresh (daily for recent), correlation pass on new claims.
 - Test: `uv run python -m briefing.worker --dry-run` shows scheduled jobs.
 - Commit: `git commit -m "feat: schedule judicial extraction and correlation jobs"`
-
 - **Status:** pending
 - **Files:** `backend/briefing/services/extraction/judicial.py`, `retention.py`, `opinions.py`; `backend/briefing/services/llm/base.py`, `perplexity.py`, `adversarial_pipeline.py`, `correlation.py`; new migrations.
 
 ### Phase 2: Directus CMS — Judicial Dossier Management
+
 **Objective:** Enable non-technical users to browse all officials/judges, manually edit dossier claims, create/replace a judge "page" (slug, bio, photo), trigger LLM refresh, and review adversarial-flagged items. All in Directus admin themed to `@design/` Silent Briefing aesthetic.
 
 **Bite-sized Tasks:**
 
 **2.1 — Custom Directus theme extension**
+
 - Scaffold: `npx create-directus-extension@latest` (type: `theme`, name: `silent-briefing-theme`)
 - Implement: Override Directus CSS variables using `design/colors_and_type.css` tokens. Navy sidebar, cream content area, gold active states, Newsreader for display, Inter for UI, no border dividers (tonal layering), Lucide icons.
 - Test: Screenshot Directus admin. Compare to `design/preview/` files. Gold active tab, cream background, navy sidebar.
 - Commit: `git commit -m "feat: directus silent briefing theme extension"`
 
 **2.2 — Official "page" management**
+
 - Directus collection `officials`: configure Create/Edit form with: `full_name`, `slug` (auto-generated from name, editable), `office_type` (select), `jurisdiction_id` (relation), `retention_year`, `photo_url`, `bio_summary` (rich text), `is_current`, `metadata`.
 - Interface: Add "Trigger LLM Refresh" button as custom panel (extension, ~60 LOC) that POST to backend `/v1/intelligence/refresh`.
 - Test: Create "Justice Test User" in Directus. Verify row in `officials` DB table. Verify refresh webhook fires.
 - Commit: `git commit -m "feat: directus official page management with llm refresh button"`
 
 **2.3 — Dossier claims management**
+
 - `dossier_claims` collection in Directus: inline edit claim text, source_url, category (dropdown enum), pipeline_stage label (read-only for LLM, editable for `human_edit`), sentiment, groundedness_score (read-only).
 - Human review queue: Directus Dashboard — filter `intelligence_runs` where `requires_human_review = true`. Show primary claim, adversarial challenge, resolution status. Operator approves/rejects/edits.
 - Test: Create a test claim via Directus. Verify in DB. Update claim, verify `updated_at` changes.
 - Commit: `git commit -m "feat: dossier claims management and human review queue in directus"`
 
 **2.4 — Jurisdiction hierarchy browser**
+
 - `jurisdictions` collection: tree view (parent_id), display `name (level)`. Add "New City" flow: creates jurisdiction + links to parent county.
 - Test: Expand "Salt Lake County" node; see "Salt Lake City" child. Add "West Jordan" under SLCO.
 - Commit: `git commit -m "feat: jurisdiction hierarchy tree view in directus"`
-
 - **Status:** pending
 
 ### Phase 3: Operator Console — Next.js Frontend
+
 **Objective:** Build the premium React/Next.js operator console from scratch using `@design/` (start fresh, OperatorConsole.jsx is reference only). Clerk auth. Supreme Court Judicial Watch as the flagship Palantir page. Dossier pages, global search.
 
 **Bite-sized Tasks:**
 
 **3.1 — Scaffold Next.js app with design system**
+
 - Command: `bunx create-next-app@latest console --typescript --tailwind --app --src-dir`
 - Install design dependencies: `bun add @clerk/nextjs lucide-react`
 - Add design CSS: Copy `design/colors_and_type.css` to `console/src/app/globals.css` (or import it). Configure font loading for Newsreader + Inter.
@@ -176,6 +194,7 @@
 - Commit: `git commit -m "feat: scaffold next.js console with design system and clerk auth"`
 
 **3.2 — Supreme Court Judicial Watch page (flagship)**
+
 - Route: `/judicial/supreme-court`
 - Layout: Navy hero band at top ("Utah Supreme Court — Retention Overview"). Below: grid of justices cards (grayscale portrait → colorize on hover, name, office, retention year, latest correlation count, verdict status). Right column: top correlations summary (bills mentioned in opinions this term). Bottom: news feed teaser (Perplexity).
 - All design system rules: tonal cards, no borders, gold pinstripes on hover, `--label-md` for metadata, no emoji, sentence-case headlines.
@@ -185,6 +204,7 @@
 - Commit: `git commit -m "feat: judicial watch supreme court page"`
 
 **3.3 — Dossier page (deep dive)**
+
 - Route: `/judicial/[slug]` (and `/officials/[slug]`, `/candidates/[slug]`)
 - Sections: Bio + portrait, "Analysis" (dossier prose, adversarial flags visible), Claims (filterable by category with source URLs), Related Entities (graph cross-refs as linked list + graph viz), Retention history (timeline), Feed tab (X posts + Perplexity news).
 - Gold-pinstriped section headers (left-border rule). Body text 65-75ch max width. Sources shown as UPPERCASE tracked `SOURCE: vote.utah.gov`.
@@ -193,6 +213,7 @@
 - Commit: `git commit -m "feat: dossier deep-dive page with claims, graph refs, and feed tab"`
 
 **3.4 — Global entity search**
+
 - Route: `/search` (+ global search bar in nav chrome)
 - Combines Supabase full-text (`ilike` on `officials.full_name`, `entities.canonical_name`) + pgvector semantic search (query embedding → ANN on `rag_chunks`).
 - Results: grouped by type (Officials, Bills, Opinions, Issues). Each result links to relevant page.
@@ -200,6 +221,7 @@
 - Commit: `git commit -m "feat: global entity search with full-text and semantic results"`
 
 **3.5 — Graph cross-reference view**
+
 - Component: `EntityGraph` — visualizes `entity_edges` for a given official/entity.
 - Visual spec: navy/cream, gold edges (stroke `--shadow-glow-gold` for strong links), Lucide icons as node labels, minimal labels in `--label-sm`.
 - Library: `@xyflow/react` (React Flow) styled to design system, or D3 force layout.
@@ -207,18 +229,20 @@
 - Commit: `git commit -m "feat: entity graph cross-reference component"`
 
 **3.6 — Feed service + dossier feed tab**
+
 - Backend: `backend/briefing/services/feeds/feed_service.py` (~100 LOC) — `FeedService` with `get_feed(official_id: str) → list[FeedItem]`. Sources: X API v2 (when token present) + Perplexity Sonar search for latest news.
 - Frontend: Feed tab on dossier page — chronological list of posts/articles with source label, date, excerpt.
 - Graceful degradation: if X token absent, Perplexity-only feed with note "X integration pending".
 - Test: Mock FeedService returns 3 items. Feed tab renders. Source labels correct.
 - Commit: `git commit -m "feat: feed service with X and perplexity sources; dossier feed tab"`
-
 - **Status:** pending
 
 ### Phase 4: Expand Officials Coverage
+
 **Objective:** Beyond Supreme Court — add UT Legislature, SLC Mayor/Council, SLCO Mayor/Council, UT Governor, UT AG, UT Delegation (federal senators/representatives). All feed into same dossier/graph pipeline.
 
 **Tasks (high-level, will be expanded into a separate plan):**
+
 - Extraction jobs for each jurisdiction/office type.
 - Data sources: vote.utah.gov, le.utah.gov (bills), legis.utah.gov, fec.gov (federal), congress.gov.
 - Entity edges: official → sponsored bills → issues, official → committee → other officials.
@@ -226,9 +250,11 @@
 - **Status:** pending
 
 ### Phase 5: Intelligence Reports & Advanced Palantir Features
+
 **Objective:** Exportable briefings, advanced analytics, historical comparisons, full adversarial report UI, cross-jurisdiction correlations.
 
 **Tasks (high-level, will be expanded):**
+
 - PDF briefing export from dossier (design system styling).
 - "Briefing mode" — curated view of top correlations + adversarial findings for human review.
 - Historical retention vote comparison across justices.
@@ -239,6 +265,7 @@
 ---
 
 ## Key Design Rules (Reference for All Phases)
+
 - Always read `@design/README.md` before writing any UI code. Read `.cursor/rules/design-system.mdc`.
 - No borders (No-Line Rule). Tonal layering only.
 - Newsreader serif for headlines, Inter for UI. Never a third font.
@@ -286,32 +313,39 @@ Config (easily swap models):
 
 ## Decisions Made (Full Registry)
 
-| Decision | Rationale |
-|----------|-----------|
-| Directus as CMS | Self-hosted, introspects existing Supabase schema, flows for automation, customizable to design system. Avoids full custom admin. |
-| Start console from scratch | OperatorConsole.jsx is design reference only — start clean Next.js with proper architecture |
-| Clerk for auth | Simpler than Supabase Auth for operator console. Well-supported MCP available. |
-| Perplexity as primary, single AI provider | One API, all models (Sonar + Agent + frontier). `LLMService` abstraction for future swaps. |
-| Adversarial AI pipeline | Accuracy + credibility for judicial/opposition dossiers. Claude (primary) + Grok (adversarial) via Perplexity Agent. Structured debate before human review. |
-| X API + Perplexity for feeds | X for direct posts; Perplexity for grounded news aggregation. `FeedService` abstraction handles both. |
-| `bun` not `node` for all JS/TS | Faster, modern. Exception: `npx create-directus-extension@latest`. |
-| `uv` not `pip` for all Python | Faster, reproducible, declarative. Never manual pyproject.toml edits. |
-| Officials hierarchy: `jurisdiction_level` + `office_type` enums | Preemptive support for all political levels without schema changes later. |
-| Judges: `party = NULL` | Utah judicial elections are non-partisan. `subject_alignment` field routes CMS/research logic. |
-| Non-election years: show incumbents | `is_current = true` on `officials` regardless of party. Election years add candidates via `races`/`candidates`. |
-| Supreme Court first | Most visible, most data-rich (opinions), best Palantir demonstration. Expand outward. |
-| Cheap model for correlation | Sonar (small) for bulk entity edge extraction; expensive frontier only for final dossiers. |
-| Directus system tables in `directus` schema | Prevents Directus from polluting `public`. Schema separation, minimal role grants. |
-| Docker Compose for local orchestration | Supabase local + Directus + backend + (future) console in single compose network. |
+
+| Decision                                                        | Rationale                                                                                                                                                   |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directus as CMS                                                 | Self-hosted, introspects existing Supabase schema, flows for automation, customizable to design system. Avoids full custom admin.                           |
+| Start console from scratch                                      | OperatorConsole.jsx is design reference only — start clean Next.js with proper architecture                                                                 |
+| Clerk for auth                                                  | Simpler than Supabase Auth for operator console. Well-supported MCP available.                                                                              |
+| Perplexity as primary, single AI provider                       | One API, all models (Sonar + Agent + frontier). `LLMService` abstraction for future swaps.                                                                  |
+| Adversarial AI pipeline                                         | Accuracy + credibility for judicial/opposition dossiers. Claude (primary) + Grok (adversarial) via Perplexity Agent. Structured debate before human review. |
+| X API + Perplexity for feeds                                    | X for direct posts; Perplexity for grounded news aggregation. `FeedService` abstraction handles both.                                                       |
+| `bun` not `node` for all JS/TS                                  | Faster, modern. Exception: `npx create-directus-extension@latest`.                                                                                          |
+| `uv` not `pip` for all Python                                   | Faster, reproducible, declarative. Never manual pyproject.toml edits.                                                                                       |
+| Officials hierarchy: `jurisdiction_level` + `office_type` enums | Preemptive support for all political levels without schema changes later.                                                                                   |
+| Judges: `party = NULL`                                          | Utah judicial elections are non-partisan. `subject_alignment` field routes CMS/research logic.                                                              |
+| Non-election years: show incumbents                             | `is_current = true` on `officials` regardless of party. Election years add candidates via `races`/`candidates`.                                             |
+| Supreme Court first                                             | Most visible, most data-rich (opinions), best Palantir demonstration. Expand outward.                                                                       |
+| Cheap model for correlation                                     | Sonar (small) for bulk entity edge extraction; expensive frontier only for final dossiers.                                                                  |
+| Directus system tables in `directus` schema                     | Prevents Directus from polluting `public`. Schema separation, minimal role grants.                                                                          |
+| Docker Compose for local orchestration                          | Supabase local + Directus + backend + (future) console in single compose network.                                                                           |
+
 
 ## Errors Encountered
+
+
 | Error | Attempt | Resolution |
-|-------|---------|------------|
-| N/A | - | - |
+| ----- | ------- | ---------- |
+| N/A   | -       | -          |
+
 
 ## Notes
+
 - **Re-read before decisions:** `CLAUDE.md`, this file, `plans/02_findings.md`, `plans/04_foundation_supabase_directus.md`, `@design/README.md`.
 - Always think Palantir: everything cross-referenced, intelligently reported.
 - Foundation (Phase 0) is the prerequisite for everything else — complete all 8 tasks in `plans/04_foundation_supabase_directus.md` before Phase 1.
 - Adversarial AI mitigations: ground both models to Stage 1 evidence, log all model outputs to `intelligence_runs`, human review gate before publishing.
 - Governance: legal/compliance sign-off before production distribution of judicial dossiers.
+

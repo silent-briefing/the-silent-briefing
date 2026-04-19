@@ -1,0 +1,14 @@
+services:
+  directus:
+    image: directus/directus:latest
+    ports:
+      - "8055:8055"
+    volumes:
+      - ./cms/uploads:/directus/uploads
+      - ./cms/extensions:/directus/extensions
+      - ./cms/schema:/directus/schema
+    env_file:
+      - cms/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

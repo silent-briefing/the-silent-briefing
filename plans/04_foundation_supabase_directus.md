@@ -14,9 +14,9 @@
 
 ## Current Status
 
-- Supabase: LOCAL CLI INITIALIZED (`supabase init` + `supabase start`; keys in `.env.local`)
-- Directus: NOT YET INSTALLED
-- Existing backend: `backend/` with FastAPI + ARQ. Schema migrations exist in `supabase/migrations/20260319180000_races_candidates.sql`.
+- Supabase: local migrations applied (`races`/`candidates`/`entities`, `jurisdictions`/`officials`, `directus_user` + search_path); keys in `.env.local`
+- Directus: Docker Compose on port 8055; system schema `directus`; baseline snapshot in `cms/schema/snapshot-baseline.yaml` (configure display templates in Admin when ready)
+- Backend: `backend/` FastAPI stub with `POST /v1/intelligence/refresh` for CMS hook
 
 ---
 
@@ -119,7 +119,7 @@ Open Studio → Table Editor. Tables `races` and `candidates` should be visible.
 **Step 4: Check RLS is enabled**
 In Studio → Authentication → Policies — confirm RLS is listed as enabled for `races` and `candidates`.
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -283,7 +283,7 @@ git add supabase/migrations/20260419000000_jurisdiction_officials.sql
 git commit -m "feat: add jurisdiction hierarchy and officials table with RLS"
 ```
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -356,7 +356,7 @@ git add supabase/migrations/20260419000001_directus_role_grants.sql
 git commit -m "feat: create directus_user role and schema isolation"
 ```
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -465,7 +465,7 @@ git commit -m "feat: add directus docker compose for local cms"
 
 (Commit `.env.example` with placeholder values, never actual `.env`).
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -515,7 +515,7 @@ git add cms/schema/
 git commit -m "feat: directus collections configured for officials hierarchy"
 ```
 
-- **Status:** pending
+- **Status:** complete (baseline snapshot committed; refine in Admin then re-run `directus schema snapshot`)
 
 ---
 
@@ -594,7 +594,7 @@ git add cms/extensions/
 git commit -m "feat: directus hook triggers llm dossier refresh on official update"
 ```
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -673,7 +673,7 @@ git add backend/
 git commit -m "feat: add intelligence refresh stub route for directus webhook"
 ```
 
-- **Status:** pending
+- **Status:** complete
 
 ---
 
@@ -695,6 +695,8 @@ After completing Tasks 1-8:
 
 | Error | Attempt | Resolution |
 | ----- | ------- | ---------- |
-| N/A   | -       | -          |
+| Directus 11 bootstrap failed as `directus_user` (`permission denied for schema public` / migration `Add Project Owner` TypeError) | 1 | Added `search_path` migration; still failed introspecting `public` during internal migrations. **Local dev:** connect Directus as Supabase `postgres` user (`cms/.env`); keep `directus_user` migration for production-like grants. |
+| `supabase db reset` exits 502 restarting containers | 1 | Harmless locally; migrations + seed apply; run `supabase status` to confirm stack. |
+| Original `20260319180000_races_candidates.sql` missing from repo | 1 | Recreated migration from `plans/00_task_plan.md` + added minimal `entities` so Task 3 `officials.entity_id` FK applies. |
 
 

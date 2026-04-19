@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+cms/.env
 
 # Python / uv
 .venv/
@@ -36,5 +37,6 @@ coverage/
 htmlcov/
 .coverage
 
-# Directus uploads (large binaries)
-cms/uploads/
+# Directus uploads (large binaries); keep directory in git
+cms/uploads/**
+!cms/uploads/.gitkeep
