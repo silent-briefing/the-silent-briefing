@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Status badges</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:26px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;}
+  .dot{width:6px;height:6px;border-radius:50%;}
+  .vetted{background:rgba(47,125,74,.1);color:#2f7d4a;} .vetted .dot{background:#2f7d4a;}
+  .pending{background:rgba(169,123,23,.12);color:#a97b17;} .pending .dot{background:#a97b17;}
+  .flagged{background:rgba(182,25,26,.1);color:#b6191a;} .flagged .dot{background:#b6191a;}
+  .unknown{background:rgba(116,119,126,.1);color:#43474d;} .unknown .dot{background:#74777e;}
+  .featured{background:#000f22;color:#d4af37;border-top:1px solid #d4af37;padding-top:3px;border-radius:2px;}
+</style></head><body>
+<span class="badge vetted"><span class="dot"></span>Vetted</span>
+<span class="badge pending"><span class="dot"></span>Pending review</span>
+<span class="badge flagged"><span class="dot"></span>Flagged</span>
+<span class="badge unknown"><span class="dot"></span>No data</span>
+<span class="badge featured">Priority · D4</span>
+</body></html>

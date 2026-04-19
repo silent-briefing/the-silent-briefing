@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Textures</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:22px 26px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tile{height:170px;border-radius:8px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;}
+  .stars{background-color:#0a2540;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><path d='M24 4 L26 18 L40 18 L28.5 26 L33 40 L24 32 L15 40 L19.5 26 L8 18 L22 18 Z' fill='%23d4af37' fill-opacity='0.05'/></svg>");}
+  .dots{background-color:#fbf9f5;background-image:radial-gradient(circle,rgba(0,15,34,.18) 1px,transparent 1px);background-size:26px 26px;border:1px solid rgba(0,15,34,.06);}
+  .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.24em;}
+  .stars .lbl{color:#d4af37;}
+  .dots  .lbl{color:#000f22;}
+</style></head><body>
+<div class="tile stars"><div class="lbl">Star field · 5% opacity · on navy</div></div>
+<div class="tile dots"><div class="lbl">Dot grid · 3% opacity · on cream</div></div>
+</body></html>

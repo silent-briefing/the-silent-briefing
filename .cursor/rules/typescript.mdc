@@ -1,0 +1,61 @@
+---
+description: TypeScript/JavaScript standards for the Silent Briefing console, CMS, and extensions
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/package.json", "**/bun.lockb"]
+alwaysApply: false
+---
+
+# TypeScript / JavaScript Standards
+
+## Runtime: `bun` Only
+
+```bash
+bun install               # install all dependencies
+bun add <package>         # add dependency
+bun add -d <package>      # add dev dependency
+bun remove <package>      # remove dependency
+bun run dev               # run dev server
+bun run build             # build
+bun run test              # run tests
+bun x <tool>              # run a package binary (like npx)
+```
+
+**Never** use `npm`, `yarn`, `pnpm`, or `node` directly.
+
+**One exception:** Directus extension scaffold requires `npx`:
+```bash
+npx create-directus-extension@latest   # only allowed use of npx
+```
+
+## TypeScript Config
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  }
+}
+```
+
+- No `any` — use `unknown` with type guards.
+- Named exports preferred over default exports.
+- Zod for runtime validation of API responses and form data.
+
+## File Structure
+
+- Max ~200 LOC per file. Split aggressively.
+- Components in `src/components/<feature>/`. Shared primitives in `src/components/ui/`.
+- Custom hooks in `src/hooks/`. Utilities in `src/lib/`.
+- One component/hook/util per file.
+
+## React / Next.js
+
+- Next.js App Router (`app/`). Server Components by default; `"use client"` only when needed.
+- Fetch in Server Components; use `unstable_cache` / `revalidatePath` for ISR patterns.
+- Never `useEffect` for data fetching — use Server Components or SWR/React Query.
+
+## Imports
+
+- Use path aliases (`@/components/`, `@/lib/`) — configure in `tsconfig.json`.
+- Absolute imports only (no `../../..` chains).

@@ -1,0 +1,100 @@
+---
+description: Silent Briefing design system rules — must follow for ALL UI code
+globs: ["**/*.tsx", "**/*.jsx", "**/*.css", "**/*.html"]
+alwaysApply: false
+---
+
+# Silent Briefing Design System
+
+Full spec: `@design/README.md`. These are the non-negotiable rules.
+
+## Tokens (always use CSS variables — never hardcode values)
+
+```css
+/* Colors */
+--primary: #000f22           /* deep navy */
+--primary-container: #0a2540
+--secondary: #b6191a         /* crimson — signal only, <5% viewport */
+--tertiary: #d4af37          /* gold — pinstripes, accents, focus rings */
+--surface: #fbf9f5           /* cream paper */
+
+/* Type scale (use token names) */
+--display-2xl, --display-lg, --headline-lg, --headline-md
+--title-lg, --body-lg, --body, --body-sm
+--label-md   /* 12px / UPPERCASE / 0.2em tracking / 700 weight */
+--label-sm   /* 10px / UPPERCASE / 0.3em tracking / 700 weight */
+
+/* Spacing: --space-1 (4px) through --space-32 (128px) */
+/* Radii: --radius-sm (2px), --radius-md (4px), --radius-lg (8px), --radius-xl (12px) */
+/* Shadows: --shadow-sm, --shadow-md, --shadow-lg, --shadow-glow-gold */
+```
+
+Import: `import '@/../../design/colors_and_type.css'` (or configure path alias).
+
+## Typography Rules
+
+- **Headlines:** Newsreader, sentence case, italic for emphasis, NEVER all-caps.
+- **Labels:** Inter, UPPERCASE, `letter-spacing: 0.2–0.3em`, font-weight 700, 10–12px.
+- **Body:** Inter, sentence case, 15–17px.
+- **Numbers:** always `font-variant-numeric: tabular-nums`.
+- Do NOT create a third font family.
+
+## The No-Line Rule
+
+**Do not use `1px solid` borders to separate content areas.** Instead:
+- Use tonal background shifts: `--surface-container-low` on `--surface`.
+- Ghost border only when required: `1px solid rgba(0, 15, 34, 0.08)`.
+- Gold pinstripe: `1px solid var(--tertiary)` — vertical accents only (left-hand ruler, featured card left-edge on hover).
+- Focus ring: `2px solid var(--tertiary)`, 4px offset — always visible on keyboard.
+
+## Cards
+
+```css
+background: var(--surface-container-lowest);
+border-radius: var(--radius-lg);  /* 8px */
+border: none;                      /* No-Line Rule */
+box-shadow: var(--shadow-sm);
+/* Hover: */
+box-shadow: var(--shadow-md);
+/* Featured: 2px top border only */
+border-top: 2px solid var(--tertiary);
+/* Hover left-accent (animated) */
+border-left: 2px solid var(--tertiary);
+```
+
+## Portraits
+
+```css
+img.portrait { filter: grayscale(1); transition: filter 600ms ease; }
+img.portrait:hover { filter: grayscale(0); }
+```
+
+## Icons
+
+- Lucide only. Stroke: 1.5px. Sizes: 16px (inline), 20px (buttons), 24px (nav), 32px (empty states).
+- Never Material Symbols.
+
+## Interactions
+
+- Hover: left gold pinstripe appears (200ms), no scale, no color flip.
+- Button hover: `brightness(1.08)`.
+- Focus: 2px gold outline, 4px offset.
+- Disabled: 40% opacity, `cursor: not-allowed`.
+- Animation: 3 families only — screen enter (opacity+y, 400ms), list hover (left-pinstripe, 200ms), stagger (60ms/child, 300ms each). One stagger per screen.
+
+## Copy Rules (enforce in UI strings)
+
+- No emoji. No 🚨 🔴 ⚠️ — use Lucide `alert-circle` / `alert-triangle`.
+- Sentence case for headlines. UPPERCASE for metadata labels only.
+- No hype: never "supercharged", "seamless", "powered by AI", "unlock", "effortless".
+- Empty state: italic serif. `"No filings on record for this cycle."`
+- Loading: name the source. `"Extracting from utcourts.gov…"`
+- Error: show when. `"Source unreachable — last successful fetch: 14:02 MT"`
+
+## Glassmorphism (only on sticky chrome)
+
+```css
+background: rgba(251, 249, 245, 0.80);
+backdrop-filter: blur(16px) saturate(1.2);
+/* no border, no shadow — blur alone creates lift */
+```

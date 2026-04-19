@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Silent Briefing — Design tokens
+   Load Newsreader + Inter from Google Fonts (self-hosted fonts/ preferred).
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap');
+
+:root {
+  /* --- Colors : Core palette --- */
+  --primary:                 #000f22;  /* Deep navy — authority */
+  --primary-container:       #0a2540;  /* Navy band / gradient partner */
+  --on-primary:              #fbf9f5;  /* Cream on navy */
+  --secondary:               #b6191a;  /* Crimson — signal only */
+  --on-secondary:            #ffffff;
+  --tertiary:                #d4af37;  /* Gold — structural accent */
+  --tertiary-container:      #cca830;
+  --on-tertiary:             #241a00;
+
+  /* --- Colors : Tonal surface ladder (paper layering) --- */
+  --background:              #fbf9f5;
+  --surface:                 #fbf9f5;
+  --surface-container-lowest:#ffffff;
+  --surface-container-low:   #f5f3ef;
+  --surface-container:       #efeeea;
+  --surface-container-high:  #eae8e4;
+  --surface-container-highest:#e4e2de;
+
+  /* --- Colors : Text (on cream) --- */
+  --fg-1:                    #000f22;  /* Display, headlines, high-contrast body */
+  --fg-2:                    #1b1c1a;  /* Body text */
+  --fg-3:                    #43474d;  /* Secondary / on-surface-variant */
+  --fg-4:                    #74777e;  /* Tertiary — metadata, placeholders */
+  --fg-5:                    rgba(0, 15, 34, 0.40); /* Subdued labels */
+
+  /* --- Colors : Text (on navy) --- */
+  --fg-inv-1:                #fbf9f5;
+  --fg-inv-2:                rgba(251, 249, 245, 0.72);
+  --fg-inv-3:                rgba(251, 249, 245, 0.48);
+  --fg-inv-4:                rgba(251, 249, 245, 0.28);
+
+  /* --- Colors : Semantic status --- */
+  --status-vetted:           #2f7d4a;
+  --status-pending:          #a97b17;
+  --status-flagged:          #b6191a;
+  --status-unknown:          #74777e;
+
+  /* --- Colors : Ghost borders / dividers (No-Line Rule fallback) --- */
+  --border-ghost:            rgba(0, 15, 34, 0.08);
+  --border-ghost-strong:     rgba(0, 15, 34, 0.14);
+  --border-gold:             #d4af37;
+  --border-gold-soft:        rgba(212, 175, 55, 0.35);
+
+  /* --- Typography : families --- */
+  --font-serif:              "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans:               "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:               ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* --- Typography : type scale (size / line-height) --- */
+  --display-2xl-size: 72px;  --display-2xl-lh: 1.02;
+  --display-lg-size:  56px;  --display-lg-lh:  1.05;
+  --display-md-size:  44px;  --display-md-lh:  1.08;
+  --headline-lg-size: 40px;  --headline-lg-lh: 1.10;
+  --headline-md-size: 28px;  --headline-md-lh: 1.20;
+  --title-lg-size:    20px;  --title-lg-lh:    1.30;
+  --title-md-size:    17px;  --title-md-lh:    1.35;
+  --body-lg-size:     17px;  --body-lg-lh:     1.6;
+  --body-size:        15px;  --body-lh:        1.55;
+  --body-sm-size:     13px;  --body-sm-lh:     1.5;
+  --label-lg-size:    13px;  --label-lg-lh:    1.2;  --label-lg-tracking: 0.16em;
+  --label-md-size:    12px;  --label-md-lh:    1.2;  --label-md-tracking: 0.2em;
+  --label-sm-size:    10px;  --label-sm-lh:    1.2;  --label-sm-tracking: 0.3em;
+
+  /* --- Spacing (8pt system) --- */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+
+  /* --- Radii --- */
+  --radius-sm: 2px;
+  --radius-md: 4px;   /* house default */
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px; /* avatars & status dots only */
+
+  /* --- Shadows — tinted navy, diffused --- */
+  --shadow-sm:  0 1px 2px 0 rgba(0, 15, 34, 0.04);
+  --shadow-md:  0 8px 24px -8px rgba(0, 15, 34, 0.08);
+  --shadow-lg:  0 24px 48px -16px rgba(0, 15, 34, 0.10);
+  --shadow-xl:  0 32px 64px -24px rgba(0, 15, 34, 0.14);
+  --shadow-glow-gold: 0 0 12px rgba(212, 175, 55, 0.35);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* --- Motion --- */
+  --ease-out:   cubic-bezier(.2,.8,.2,1);
+  --ease-in-out:cubic-bezier(.4,0,.2,1);
+  --dur-fast:   150ms;
+  --dur-base:   250ms;
+  --dur-slow:   400ms;
+  --dur-deliberate: 600ms;
+
+  /* --- Z-axis --- */
+  --z-header: 40;
+  --z-nav:    50;
+  --z-modal:  60;
+  --z-toast:  70;
+}
+
+/* ==========================================================================
+   Semantic element styles — defaults only (components override freely)
+   ========================================================================== */
+
+html, body {
+  background: var(--background);
+  color: var(--fg-2);
+  font-family: var(--font-sans);
+  font-size: var(--body-size);
+  line-height: var(--body-lh);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11", "cv03";
+}
+
+::selection { background: rgba(212, 175, 55, 0.30); color: var(--fg-1); }
+
+/* Display + headlines — serif, editorial */
+.display-2xl, .display-lg, .display-md,
+.headline-lg, .headline-md,
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  color: var(--fg-1);
+  letter-spacing: -0.01em;
+}
+
+.display-2xl { font-size: var(--display-2xl-size); line-height: var(--display-2xl-lh); letter-spacing: -0.02em; }
+.display-lg  { font-size: var(--display-lg-size);  line-height: var(--display-lg-lh);  letter-spacing: -0.018em;}
+.display-md  { font-size: var(--display-md-size);  line-height: var(--display-md-lh);  letter-spacing: -0.015em;}
+.headline-lg { font-size: var(--headline-lg-size); line-height: var(--headline-lg-lh);}
+.headline-md { font-size: var(--headline-md-size); line-height: var(--headline-md-lh);}
+
+h1 { font-size: var(--display-lg-size);  line-height: var(--display-lg-lh); }
+h2 { font-size: var(--headline-lg-size); line-height: var(--headline-lg-lh);}
+h3 { font-size: var(--headline-md-size); line-height: var(--headline-md-lh);}
+
+/* Titles — sans at UI scale */
+.title-lg, h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--title-lg-size);
+  line-height: var(--title-lg-lh);
+  letter-spacing: -0.005em;
+  color: var(--fg-1);
+}
+.title-md {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--title-md-size);
+  line-height: var(--title-md-lh);
+  color: var(--fg-1);
+}
+
+/* Body */
+.body-lg { font-family: var(--font-sans); font-size: var(--body-lg-size); line-height: var(--body-lg-lh); color: var(--fg-2); }
+.body    { font-family: var(--font-sans); font-size: var(--body-size);    line-height: var(--body-lh);    color: var(--fg-2); }
+.body-sm { font-family: var(--font-sans); font-size: var(--body-sm-size); line-height: var(--body-sm-lh); color: var(--fg-3); }
+p        { font-family: var(--font-sans); font-size: var(--body-size);    line-height: var(--body-lh);    color: var(--fg-2); margin: 0; }
+
+/* Labels — UPPERCASE tracked (dossier metadata) */
+.label-lg, .label-md, .label-sm {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.label-lg { font-size: var(--label-lg-size); line-height: var(--label-lg-lh); letter-spacing: var(--label-lg-tracking); }
+.label-md { font-size: var(--label-md-size); line-height: var(--label-md-lh); letter-spacing: var(--label-md-tracking); }
+.label-sm { font-size: var(--label-sm-size); line-height: var(--label-sm-lh); letter-spacing: var(--label-sm-tracking); }
+
+/* Editorial italic emphasis */
+.serif-italic, em { font-family: var(--font-serif); font-style: italic; font-weight: 400; }
+
+/* Tabular numerics for scores and counts */
+.num, .tabular { font-variant-numeric: tabular-nums; }
+
+/* Mono */
+code, pre, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+
+/* Links */
+a {
+  color: var(--fg-1);
+  text-decoration: underline;
+  text-decoration-color: var(--border-gold-soft);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-base) var(--ease-out);
+}
+a:hover { text-decoration-color: var(--tertiary); }
+
+/* HR as pinstripe */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--border-ghost);
+  margin: var(--space-8) 0;
+}
+hr.gold { background: var(--tertiary); }
+
+/* Utility — pinstripes & textures */
+.pinstripe-gold   { border-left: 1px solid var(--tertiary); padding-left: var(--space-4); }
+.pinstripe-gold-r { border-right:1px solid var(--tertiary); padding-right: var(--space-4); }
+
+.glass-cream { background: rgba(251, 249, 245, 0.80); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+.glass-navy  { background: rgba(10, 37, 64, 0.72);  backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+
+.pattern-stars-navy {
+  background-color: var(--primary-container);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M24 4 L26 18 L40 18 L28.5 26 L33 40 L24 32 L15 40 L19.5 26 L8 18 L22 18 Z' fill='%23d4af37' fill-opacity='0.035'/></svg>");
+}
+.pattern-dots-cream {
+  background-color: var(--surface);
+  background-image: radial-gradient(circle, rgba(0, 15, 34, 0.10) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Focus ring — gold, always visible on keyboard */
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--tertiary);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

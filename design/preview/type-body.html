@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Body + label type</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);color:#1b1c1a;}
+  body{padding:22px 26px;display:grid;grid-template-columns:1.1fr 1fr;gap:28px;}
+  .kick{font-size:11px;font-weight:600;color:#74777e;margin-bottom:10px;letter-spacing:.01em;}
+  .kick::before{content:"";display:inline-block;width:14px;height:1px;background:#74777e;margin-right:8px;vertical-align:middle;}
+  p{margin:0 0 8px 0;}
+  .body-lg{font-size:17px;line-height:1.6;color:#1b1c1a;}
+  .body   {font-size:15px;line-height:1.55;color:#1b1c1a;}
+  .body-sm{font-size:13px;line-height:1.5;color:#43474d;}
+
+  /* Labels — sentence case, weighted, tiny tracking. No allcaps. */
+  .lbl-lg{font-size:13px;font-weight:600;color:#000f22;letter-spacing:.005em;}
+  .lbl-md{font-size:12px;font-weight:500;color:#43474d;letter-spacing:.005em;}
+  .lbl-sm{font-size:11px;font-weight:500;color:#74777e;letter-spacing:.01em;}
+  .lbl-sm .tick{display:inline-block;width:4px;height:4px;border-radius:50%;background:#b6191a;margin-right:6px;vertical-align:middle;}
+
+  .meta{font-family:var(--font-serif);font-style:italic;font-size:13px;color:#74777e;}
+  .spec{font-size:9px;color:#b3b6bb;font-feature-settings:"tnum";margin-top:14px;font-family:ui-monospace,Menlo,monospace;letter-spacing:0;}
+</style></head><body>
+<div class="blk">
+  <p class="kick">Body · Inter</p>
+  <p class="body-lg">Rep. Anderegg filed a disclosure on Oct 23 citing a new commercial interest.</p>
+  <p class="body">Source: <em>vote.utah.gov</em> filing record 2026‑0423‑HD13. Cross‑referenced against SLCO clerk records; no conflicts found.</p>
+  <p class="body-sm">Last sync 14:02 MT, by extraction worker #4.</p>
+  <p class="spec">17 / 1.6 &nbsp;·&nbsp; 15 / 1.55 &nbsp;·&nbsp; 13 / 1.5</p>
+</div>
+<div class="blk">
+  <p class="kick">Labels · sentence case, weighted</p>
+  <p class="lbl-lg">Priority vetting</p>
+  <p class="lbl-md">Filed <span class="meta">Oct 23, 14:02 MT</span></p>
+  <p class="lbl-sm"><span class="tick"></span>Confidential &mdash; delegate access</p>
+  <p class="spec">13/600 &nbsp;·&nbsp; 12/500 &nbsp;·&nbsp; 11/500 &nbsp;·&nbsp; tracking ≤ .01em</p>
+</div>
+</body></html>

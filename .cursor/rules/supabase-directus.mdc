@@ -1,0 +1,64 @@
+---
+description: Supabase and Directus integration rules for Silent Briefing
+globs: ["supabase/**", "cms/**", "**/migrations/**"]
+alwaysApply: false
+---
+
+# Supabase + Directus Rules
+
+## Supabase
+
+- **Always use Supabase CLI** for all DB operations — never direct SQL in production without a migration.
+- Local dev: `supabase start` → API at `http://127.0.0.1:54321`, DB at `postgresql://postgres:postgres@127.0.0.1:54322/postgres`, Studio at `http://127.0.0.1:54323`.
+- Create migrations: `supabase migration new <descriptive-name>`.
+- Apply: `supabase db push` (hosted) or `supabase db reset` (local, destructive).
+- Never skip `supabase db diff` before pushing to verify migration.
+- RLS on every table that is user-reachable via the Data API (anon/publishable key).
+- `service_role` key backend-only. Never in client bundles.
+- Use Supabase MCP for introspection: `plugin-supabase-supabase`.
+
+## Schema Conventions
+
+```sql
+-- All PKs: uuid DEFAULT gen_random_uuid()
+-- All timestamps: timestamptz DEFAULT now()
+-- Soft delete: deleted_at timestamptz (prefer over hard delete)
+-- Slugs: text UNIQUE NOT NULL (for URL routing)
+-- JSONB metadata: DEFAULT '{}'::jsonb
+-- Enums: CREATE TYPE ... AS ENUM (...) before tables that use them
+```
+
+## Official Hierarchy
+
+Every elected official, judge, or candidate maps to this hierarchy:
+
+```
+jurisdiction_level: federal | state | county | city | district
+office_type: senator | representative | governor | lt_governor | attorney_general |
+             mayor | city_council | county_commissioner | county_clerk | county_mayor |
+             state_supreme_justice | state_appellate_judge | state_district_judge | federal_judge
+```
+
+Judges: `party = NULL` (non-partisan). Track `retention_year`, `is_current`.
+Non-election years: `is_current = true` officials are displayed even if non-GOP.
+Election years: include challengers/candidates via `races` + `candidates` (existing schema).
+
+## Directus
+
+- Connects to the SAME Supabase Postgres. No separate DB.
+- Directus system tables in `directus` schema (`DB_SCHEMA=directus`). Never `public`.
+- Schema owned by Supabase migrations. Directus reads/introspects, does not define schema.
+- Scaffold: `bunx create-directus-project@latest cms` OR Docker compose (preferred for self-hosted).
+- Extensions: `npx create-directus-extension@latest` (only allowed `npx`).
+- Extensions live in `cms/extensions/`. One concern per extension, ~200 LOC.
+- Custom interfaces/panels must use design system CSS vars + Lucide icons.
+- Flows: use for "on item save → trigger LLM correlation/refresh" (POST to backend worker API).
+
+## Migration Naming
+
+```
+YYYYMMDDHHMMSS_<descriptive_name>.sql
+20260319180000_races_candidates.sql    ← existing
+20260419000000_jurisdiction_officials.sql
+20260419000001_directus_role_grants.sql
+```

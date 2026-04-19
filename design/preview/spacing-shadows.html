@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Shadows</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:#fbf9f5;font-family:var(--font-sans);}
+  body{padding:28px 26px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+  .cell{display:flex;flex-direction:column;gap:10px;align-items:flex-start;}
+  .box{width:100%;height:76px;background:#ffffff;border-radius:8px;}
+  .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.22em;color:#000f22;}
+  .px{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#43474d;line-height:1.4;}
+  .gold{background:#0a2540;box-shadow:0 0 0 1px rgba(212,175,55,.3),0 0 16px rgba(212,175,55,.35);}
+</style></head><body>
+<div class="cell"><div class="box" style="box-shadow:0 1px 2px 0 rgba(0,15,34,.04);"></div><div class="lbl">Shadow SM</div><div class="px">Rest · list rows</div></div>
+<div class="cell"><div class="box" style="box-shadow:0 8px 24px -8px rgba(0,15,34,.08);"></div><div class="lbl">Shadow MD</div><div class="px">Cards · hover</div></div>
+<div class="cell"><div class="box" style="box-shadow:0 24px 48px -16px rgba(0,15,34,.10);"></div><div class="lbl">Shadow LG</div><div class="px">Dropdowns · panels</div></div>
+<div class="cell"><div class="box gold"></div><div class="lbl">Glow · gold</div><div class="px">Featured accents only</div></div>
+</body></html>

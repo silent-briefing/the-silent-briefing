@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Buttons</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:22px 26px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border:none;cursor:pointer;font-family:var(--font-sans);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;border-radius:4px;transition:filter .2s;}
+  .btn:hover{filter:brightness(1.08);}
+  .primary{background:#000f22;color:#fbf9f5;}
+  .secondary{background:#fbf9f5;color:#000f22;border-left:2px solid #d4af37;padding-left:18px;box-shadow:0 1px 2px rgba(0,15,34,.04);}
+  .ghost{background:transparent;color:#000f22;text-decoration:underline;text-decoration-color:rgba(212,175,55,.35);text-underline-offset:5px;padding-left:4px;padding-right:4px;}
+  .destructive{background:#b6191a;color:#fff;}
+  .gold{background:#d4af37;color:#241a00;}
+</style></head><body>
+<button class="btn primary">Open dossier</button>
+<button class="btn secondary">Export PDF</button>
+<button class="btn ghost">View matrix →</button>
+<button class="btn destructive">Flag for review</button>
+<button class="btn gold">Authorize</button>
+</body></html>

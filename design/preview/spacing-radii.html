@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Radii</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:22px 26px;display:flex;gap:18px;align-items:flex-end;}
+  .cell{display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .box{width:80px;height:80px;background:#fbf9f5;box-shadow:0 8px 24px -8px rgba(0,15,34,.08);border:1px solid rgba(0,15,34,.06);}
+  .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.22em;color:#74777e;}
+  .px{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#43474d;}
+</style></head><body>
+<div class="cell"><div class="box" style="border-radius:2px;"></div><div class="lbl">SM</div><div class="px">2px</div></div>
+<div class="cell"><div class="box" style="border-radius:4px;"></div><div class="lbl">MD · default</div><div class="px">4px</div></div>
+<div class="cell"><div class="box" style="border-radius:8px;"></div><div class="lbl">LG · cards</div><div class="px">8px</div></div>
+<div class="cell"><div class="box" style="border-radius:12px;"></div><div class="lbl">XL · modals</div><div class="px">12px</div></div>
+<div class="cell"><div class="box" style="border-radius:999px;"></div><div class="lbl">Pill · avatars only</div><div class="px">999</div></div>
+</body></html>

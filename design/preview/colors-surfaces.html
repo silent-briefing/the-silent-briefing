@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Surface ladder</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:22px 24px;}
+  .stack{position:relative;height:260px;}
+  .layer{position:absolute;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .layer .n{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:var(--fg-1);}
+  .layer .h{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--fg-3);}
+  .l0{inset:0 0 0 0;background:#fbf9f5;}
+  .l1{inset:22px 22px 22px 22px;background:#f5f3ef;}
+  .l2{inset:44px 44px 44px 44px;background:#efeeea;}
+  .l3{inset:66px 66px 66px 66px;background:#eae8e4;}
+  .l4{inset:88px 88px 88px 88px;background:#e4e2de;}
+  .l5{inset:110px 110px 110px 110px;background:#ffffff;border:1px solid rgba(0,15,34,.06);}
+</style></head><body>
+<div class="stack">
+  <div class="layer l0"><span class="n">surface</span><span class="h">#FBF9F5</span></div>
+  <div class="layer l1"><span class="n">container-low</span><span class="h">#F5F3EF</span></div>
+  <div class="layer l2"><span class="n">container</span><span class="h">#EFEEEA</span></div>
+  <div class="layer l3"><span class="n">container-high</span><span class="h">#EAE8E4</span></div>
+  <div class="layer l4"><span class="n">container-highest</span><span class="h">#E4E2DE</span></div>
+  <div class="layer l5"><span class="n">container-lowest</span><span class="h">#FFFFFF</span></div>
+</div>
+</body></html>

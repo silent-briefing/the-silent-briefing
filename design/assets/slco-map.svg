@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  
+  <rect width="400" height="300" fill="#efeeea"></rect>
+  
+  <path d="M40 70 L350 62 L360 200 L340 250 L170 260 L50 240 Z" fill="#e4e2de" stroke="#0a2540" stroke-width="1" stroke-opacity="0.35"></path>
+  
+  <g fill="none" stroke="#0a2540" stroke-width="0.7" stroke-opacity="0.25" stroke-dasharray="2 2">
+    <path d="M40 140 L355 138"></path>
+    <path d="M150 70 L155 260"></path>
+    <path d="M240 70 L245 260"></path>
+  </g>
+  
+  <path d="M50 75 L160 72 L170 120 L90 135 L45 115 Z" fill="#0a2540" fill-opacity="0.12"></path>
+  
+  <g>
+    <circle cx="90" cy="180" r="5" fill="#d4af37"></circle>
+    <circle cx="200" cy="160" r="5" fill="#b6191a"></circle>
+    <circle cx="300" cy="190" r="5" fill="#d4af37"></circle>
+    <circle cx="260" cy="220" r="5" fill="#0a2540"></circle>
+  </g>
+  
+  <g font-family="Inter, sans-serif" font-size="7" font-weight="700" letter-spacing="2" fill="#43474d">
+    <text x="40" y="55">SALT LAKE COUNTY</text>
+    <text x="60" y="195">D3</text>
+    <text x="210" y="155">D4</text>
+    <text x="310" y="188">D2</text>
+    <text x="270" y="215">D7</text>
+  </g>
+</svg>

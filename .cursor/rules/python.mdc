@@ -1,0 +1,64 @@
+---
+description: Python coding standards for the Silent Briefing backend (FastAPI + workers)
+globs: ["**/*.py", "**/pyproject.toml"]
+alwaysApply: false
+---
+
+# Python Standards
+
+## Package Manager: `uv` Only
+
+```bash
+uv add <package>          # install dependency
+uv add --dev <package>    # install dev dependency
+uv remove <package>       # uninstall
+uv run <command>          # run in venv (pytest, python, etc.)
+uv sync                   # sync all deps from lock file
+uv init                   # initialize new project
+```
+
+**Never** use `pip`, `pip install`, `poetry`, `pipenv`, or manually edit `pyproject.toml`.
+
+## Code Style
+
+- Python 3.12+. Type hints on every function parameter and return type.
+- `pydantic` for data models. `pydantic-settings` for env config (class-based, never `os.environ` directly).
+- Use `async def` for all I/O-bound functions (HTTP, DB, LLM calls).
+- `httpx.AsyncClient` for HTTP. Never `requests` in async contexts.
+
+## File Structure
+
+- Max ~200 LOC per file. Split when approaching limit.
+- One concern per module (SRP). `services/llm/`, `services/extraction/`, `services/persistence/`, `services/feeds/`.
+- Never put business logic in FastAPI route handlers — route = thin dispatch, logic in `services/`.
+
+## LLM Service Pattern
+
+```python
+# briefing/services/llm/base.py
+from typing import Protocol
+
+class LLMService(Protocol):
+    async def retrieve(self, prompt: str, model: str) -> RetrievalResult: ...
+    async def generate(self, evidence: EvidenceBundle, model: str) -> DossierDraft: ...
+    async def critique(self, draft: DossierDraft, model: str) -> CritiqueResult: ...
+```
+
+Always code to the `LLMService` protocol, never directly to `PerplexityClient`.
+
+## Error Handling
+
+- Log with structured JSON (`job_id`, `entity_id` in every log record).
+- Never log full API keys — trim to first 8 chars + `***`.
+- Retries with exponential backoff + jitter for all external calls.
+- Idempotent: every DB write path is safe to run twice (use `ON CONFLICT DO UPDATE`).
+
+## Testing
+
+```bash
+uv run pytest
+uv run pytest tests/path/test.py::test_name -v
+```
+
+- Golden sets for LLM tests (fixed input → expected JSON shape).
+- Test every service function independently. Mock external HTTP with `respx`.

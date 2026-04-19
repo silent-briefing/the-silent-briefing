@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Form fields</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:26px;display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .field{display:flex;flex-direction:column;}
+  .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.22em;color:#74777e;margin-bottom:8px;}
+  input,select{font:inherit;font-size:14px;color:#000f22;background:transparent;border:none;border-bottom:2px solid #000f22;padding:6px 0;outline:none;transition:border-color .2s;}
+  input:focus,select:focus{border-bottom-color:#d4af37;}
+  input::placeholder{color:#74777e;}
+  .bar{background:#efeeea;height:38px;display:flex;align-items:center;padding:0 12px;border-radius:4px;}
+  .bar svg{width:14px;height:14px;stroke:#74777e;margin-right:8px;}
+  .bar input{border:none;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;flex:1;}
+</style></head><body>
+<div class="field">
+  <div class="lbl">Candidate name</div>
+  <input value="Julianne DeSilva"/>
+</div>
+<div class="field">
+  <div class="lbl">District cluster</div>
+  <select><option>All districts</option></select>
+</div>
+<div class="field" style="grid-column:1/-1;">
+  <div class="lbl">Search dossiers</div>
+  <div class="bar"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="SEARCH BY NAME, DISTRICT, OR FILING…"/></div>
+</div>
+</body></html>

@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Logo / shield</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:var(--background);font-family:var(--font-sans);}
+  body{padding:22px 26px;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch;}
+  .tile{background:#000f22;padding:20px 22px;border-radius:8px;display:flex;align-items:center;gap:16px;}
+  .tile img{width:60px;height:75px;flex-shrink:0;}
+  .wm{color:#fbf9f5;line-height:1.1;}
+  .wm .a{font-family:var(--font-serif);font-weight:400;font-size:22px;letter-spacing:-0.005em;color:#fbf9f5;}
+  .wm .a em{font-style:italic;color:#d4af37;}
+  .bar{height:1px;background:#d4af37;opacity:.55;margin:8px 0 7px;width:48px;}
+  .wm .b{font-size:11px;color:#a1978a;font-weight:500;letter-spacing:.005em;}
+  .wm .b em{font-style:italic;font-family:var(--font-serif);color:#d4af37;}
+  .on-cream{background:#fbf9f5;border:1px solid #eceae3;}
+  .on-cream .wm .a{color:#000f22;}
+  .on-cream .wm .a em{color:#a97b17;}
+  .on-cream .bar{background:#a97b17;opacity:.6;}
+  .on-cream .wm .b{color:#74777e;}
+  .on-cream .wm .b em{color:#a97b17;}
+</style></head><body>
+<div class="tile">
+  <img src="../assets/shield.svg" alt=""/>
+  <div class="wm">
+    <div class="a">The Silent <em>Briefing</em></div>
+    <div class="bar"></div>
+    <div class="b">Candidate intelligence, <em>for Utah</em>.</div>
+  </div>
+</div>
+<div class="tile on-cream">
+  <img src="../assets/shield.svg" alt=""/>
+  <div class="wm">
+    <div class="a">The Silent <em>Briefing</em></div>
+    <div class="bar"></div>
+    <div class="b">Candidate intelligence, <em>for Utah</em>.</div>
+  </div>
+</div>
+</body></html>

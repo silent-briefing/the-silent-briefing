@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Candidate row</title>
+<style>
+  @import url("../colors_and_type.css");
+  html,body{margin:0;background:#f5f3ef;font-family:var(--font-sans);color:#1b1c1a;}
+  body{padding:24px;}
+  .row{background:#fff;display:flex;align-items:center;gap:18px;padding:16px 18px;border-radius:8px;box-shadow:0 1px 2px rgba(0,15,34,.04);transition:all .2s;position:relative;}
+  .row + .row{margin-top:10px;}
+  .row::before{content:"";position:absolute;left:0;top:10%;bottom:10%;width:0;background:#d4af37;transition:width .2s;border-radius:2px 0 0 2px;}
+  .row:hover::before{width:2px;}
+  .av{width:44px;height:44px;border-radius:50%;background:#e4e2de;font-family:var(--font-serif);font-size:16px;color:#000f22;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .name{font-family:var(--font-serif);font-size:17px;color:#000f22;font-weight:500;line-height:1.2;}
+  .meta{font-size:13px;color:#74777e;margin-top:4px;}
+  .meta em{font-style:italic;font-family:var(--font-serif);color:#43474d;}
+  .spacer{flex:1;}
+  .score{font-family:var(--font-serif);font-size:22px;color:#000f22;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;}
+  .score-lbl{font-size:11px;font-weight:500;color:#74777e;text-align:right;margin-bottom:3px;}
+
+  /* Status chips: allcaps retained intentionally — these are enum tokens, not prose.
+     Same role as <state> in an API response; they need to read as a fixed set. */
+  .st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;}
+  .st::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .v{background:rgba(47,125,74,.1);color:#2f7d4a;}
+  .f{background:rgba(182,25,26,.1);color:#b6191a;}
+</style></head><body>
+<div class="row">
+  <div class="av">JD</div>
+  <div>
+    <div class="name">Julianne DeSilva <span class="st v" style="margin-left:8px;vertical-align:middle;">Vetted</span></div>
+    <div class="meta">House District 32 &middot; Republican &middot; filed <em>Oct 23</em></div>
+  </div>
+  <div class="spacer"></div>
+  <div><div class="score-lbl">Dossier</div><div class="score">94%</div></div>
+</div>
+<div class="row">
+  <div class="av">MT</div>
+  <div>
+    <div class="name">Marcus Thorne <span class="st f" style="margin-left:8px;vertical-align:middle;">Flagged</span></div>
+    <div class="meta">Senate District 8 &middot; Republican &middot; filed <em>Oct 23</em></div>
+  </div>
+  <div class="spacer"></div>
+  <div><div class="score-lbl">Dossier</div><div class="score" style="color:#b6191a;">62%</div></div>
+</div>
+</body></html>
