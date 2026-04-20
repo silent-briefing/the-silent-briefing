@@ -15,8 +15,42 @@
 ## Current Status
 
 - Supabase: local migrations applied (`races`/`candidates`/`entities`, `jurisdictions`/`officials`, `directus_user` + search_path); keys in `.env.local`
-- Directus: Docker Compose on port **8055**; collection metadata snapshot `cms/schema/snapshot-baseline.yaml`; script `cms/scripts/register-app-collections.ps1` activates app tables in the Studio sidebar.
+- Directus: Docker Compose on port **8055**; collection metadata snapshot `cms/schema/snapshot-baseline.yaml`; script `cms/scripts/register-app-collections.ps1` activates app tables in the Studio sidebar — **operator confirmed successful run** (Content shows app collections).
 - Backend: `backend/` FastAPI stub with `POST /v1/intelligence/refresh` for CMS hook
+
+### After `supabase db reset` (Postgres recreated)
+
+Directus stores **its own system tables in the same Postgres** as Supabase. A reset deletes them. The Directus container may also keep **stale connections** or a half-initialized state, which often shows up as **GraphQL / API `INTERNAL_SERVER_ERROR`** until you reinstall and reapply metadata.
+
+**Do not** run `supabase db reset` alone in day-to-day dev unless you immediately repair Directus.
+
+#### One-command flow (recommended)
+
+From the repo root:
+
+```powershell
+.\scripts\dev-db-reset.ps1
+```
+
+That runs `supabase db reset`, then `cms/scripts/sync-directus-after-supabase-reset.ps1` (stop Directus → start fresh → **`npx directus bootstrap`** → **`npx directus schema apply`** `snapshot-baseline.yaml` → optional collection registration when `DIRECTUS_EMAIL` / `DIRECTUS_PASSWORD` are set).
+
+If you already reset the DB and only need to fix Directus:
+
+```powershell
+.\cms\scripts\sync-directus-after-supabase-reset.ps1
+```
+
+#### Required env (Directus 10+)
+
+In `cms/.env`, set stable random values for **`KEY`** and **`SECRET`** (see `cms/.env.example`). Missing **`KEY`** or changing it against an existing encrypted install is a common cause of **500 / INTERNAL_SERVER_ERROR**. After a **full** DB reset, a fresh install + stable `KEY`/`SECRET` in `.env` is correct.
+
+#### Manual recovery checklist (legacy)
+
+1. `supabase status` — confirm API/DB URLs (ignore transient **502** messages from the CLI if status is healthy afterward).
+2. Run **`sync-directus-after-supabase-reset.ps1`** (preferred) or at minimum: `docker compose stop directus` then `docker compose up -d directus`, then bootstrap + schema apply as in the script.
+3. Log in at `http://127.0.0.1:8055/admin` with **`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `cms/.env`** after a fresh bootstrap (or the password you chose in the UI if you did not re-bootstrap).
+4. If the browser still shows errors: **hard refresh** or a **private window** (old JWT/local storage can confuse the SPA after a reinstall).
+5. Smoke: **Content** lists app collections; PATCH an `officials` row and confirm the hook reaches `POST /v1/intelligence/refresh` (backend running with matching `BACKEND_SERVICE_KEY`).
 
 ---
 
@@ -461,10 +495,12 @@ Expected: Directus starts at `http://127.0.0.1:8055`. **Log in with the email an
 
 | Topic | What to know |
 | ----- | ------------ |
-| Login | Browser registration creates your admin user. `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `cms/.env` do **not** update that password later. `.env.local` is for other apps (e.g. FastAPI), not Directus session auth. |
+| `KEY` + `SECRET` | Directus **10+** requires **`KEY`** in `cms/.env` (encryption at rest). **`SECRET`** signs JWTs. Missing `KEY` often yields **`INTERNAL_SERVER_ERROR`** on GraphQL/API. |
+| `supabase db reset` | Wipes Directus tables too. Use **`scripts/dev-db-reset.ps1`** or run **`cms/scripts/sync-directus-after-supabase-reset.ps1`** immediately after any full Postgres reset. |
+| Login | After **`directus bootstrap`**, use `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `cms/.env`. Changing those env vars later does **not** change an existing admin password. |
 | “No dashboard” | Directus 11 is the **Data Studio**. Use **Content** (data), **Settings → Data Model** (schema/UI), **Settings → Project Settings** (project). There is no separate marketing dashboard. |
 | Supabase link | `cms/.env` `DB_*` must match `supabase status` DB URL (`postgres` on port `54322`). If Directus boots and shows the login screen, it already reached Postgres. |
-| App tables invisible | Tables existed in Postgres but had no `directus_collections` metadata. Run the registration script above or `PATCH` collections via API; committed snapshot `cms/schema/snapshot-baseline.yaml` documents the intended collection meta. |
+| App tables invisible | Run **`sync-directus-after-supabase-reset.ps1`** (applies `snapshot-baseline.yaml`) and/or `register-app-collections.ps1`. |
 
 **Step 6: Commit**
 
@@ -625,9 +661,11 @@ In `backend/briefing/config.py`, ensure these are present (use `uv add` if `pyda
 class Settings(BaseSettings):
     # ... existing fields ...
     backend_service_key: str = ""         # shared secret for Directus webhook
-    writer_model: str = "claude-sonnet-4-5"
-    adversarial_model: str = "grok-4"
+    # Perplexity Sonar-only defaults; see https://docs.perplexity.ai/docs/sonar/models
+    writer_model: str = "sonar-pro"
+    adversarial_model: str = "sonar-reasoning-pro"
     correlation_model: str = "sonar"
+    research_model: str = "sonar-deep-research"
 ```
 
 **Step 2: Add stub route**
@@ -712,5 +750,7 @@ After completing Tasks 1-8:
 | Login with `ADMIN_PASSWORD` from `.env` fails after browser registration                                                           | 1       | Expected: admin password is whatever you set in the Directus UI. Env `ADMIN_*` only applies to first automated bootstrap on an empty Directus DB.                                                                                  |
 | App tables missing from Directus **Content**                                                                                       | 1       | Postgres tables need `directus_collections` / metadata. Run `cms/scripts/register-app-collections.ps1 -Email … -Password …` (JWT via `/auth/login`), or `-Token` with a **full** user static token. Or apply `cms/schema/snapshot-baseline.yaml` on a fresh instance. |
 | Script returns **401** with `-Token`                                                                                               | 1       | Use `-Email` / `-Password` instead (web UI credentials). Regenerate static token if needed; ensure the value is not truncated and is the **user** token, not an unrelated API key.                                                |
+| **`supabase db reset` then Directus `POST /auth/login` 401** with `cms/.env` `ADMIN_PASSWORD`                                      | 1       | After reset, the admin user/password in DB may come from the **browser setup** path, not `.env`. Log in via UI, then use those credentials for the script, or update `cms/.env` / env vars to match.                               |
+| GraphQL / API **`INTERNAL_SERVER_ERROR`** after Postgres reset                                                                     | 1       | Directus system tables were wiped; container may be half-connected. Run `cms/scripts/sync-directus-after-supabase-reset.ps1` (bootstrap + schema apply). Ensure `cms/.env` has **`KEY`** + **`SECRET`**. Clear browser storage or use a private window. Prefer `scripts/dev-db-reset.ps1` instead of raw `supabase db reset`. |
 
 

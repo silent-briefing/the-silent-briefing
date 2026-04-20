@@ -3,15 +3,15 @@
 
 ## Goal
 
-Build the **full Palantir-for-Utah intelligence platform** for Utah GOP use, focused initially on **Utah Supreme Court Judicial Watch** (justices, retention elections, opinions analysis) with expansion to Federal, State, Salt Lake City, and Salt Lake County officials/judges/candidates. **Always maintain living dossiers** for current elected/judges (including non-Republicans in non-election years); add candidate info during election/retention cycles. Core: evidence-based **claim-level vault** in Supabase, **entity graph** with heavy cross-referencing (judge ↔ opinion ↔ bill ↔ issue ↔ media/coverage), **intelligent reporting** that surfaces connected insights, **Directus CMS** for easy non-dev management ("create/replace pages", manual dossier/claim edits without DB changes), **Clerk-auth'ed Next.js Operator Console** (Supreme Court main page with justices overview/news, dynamic dossier views with tabs for analysis/claims/interactive graph/feed), and **Perplexity-first AI orchestration** (Sonar/Reasoning Pro for retrieval/correlation/grounding; Agent for drafting; adversarial critique with different model/pedigree before final synthesis + human review).
+Build the **full Palantir-for-Utah intelligence platform** for Utah GOP use, focused initially on **Utah Supreme Court Judicial Watch** (justices, retention elections, opinions analysis) with expansion to Federal, State, Salt Lake City, and Salt Lake County officials/judges/candidates. **Always maintain living dossiers** for current elected/judges (including non-Republicans in non-election years); add candidate info during election/retention cycles. Core: evidence-based **claim-level vault** in Supabase, **entity graph** with heavy cross-referencing (judge ↔ opinion ↔ bill ↔ issue ↔ media/coverage), **intelligent reporting** that surfaces connected insights, **Directus CMS** for easy non-dev management ("create/replace pages", manual dossier/claim edits without DB changes), **Clerk-auth'ed Next.js Operator Console** (Supreme Court main page with justices overview/news, dynamic dossier views with tabs for analysis/claims/interactive graph/feed), and **Perplexity-first AI orchestration** using **only the Sonar model family** ([Sonar models](https://docs.perplexity.ai/docs/sonar/models)): cheaper tiers for volume (retrieval, correlation), stronger tiers for drafting and critique, optional `sonar-deep-research` for heavy runs — all via **Sonar Chat Completions** (`/chat/completions`); adversarial critique = **different Sonar tier + critique prompt**, then synthesis + human review (no multi-vendor writer roster).
 
-**Perplexity for everything** (one-stop; configurable abstraction for easy future swap). **Palantir principles everywhere**: automated + LLM-driven correlation (cheap models for edge proposal), interactive graph viz, RAG-augmented intelligent briefings that traverse connections intelligently. Self-hosted where possible (Supabase local CLI/Docker, Directus Docker, Next dev server, FastAPI workers).
+**Perplexity Sonar for all LLM work** (one API surface; model IDs from [Sonar models](https://docs.perplexity.ai/docs/sonar/models); abstraction still allows a future provider swap). **Palantir principles everywhere**: automated + LLM-driven correlation (cheaper Sonar tiers for edge proposal), interactive graph viz, RAG-augmented intelligent briefings that traverse connections intelligently. Self-hosted where possible (Supabase local CLI/Docker, Directus Docker, Next dev server, FastAPI workers).
 
 **What we are building**: Extend existing FastAPI backend + workers (Phase 1 foundation complete/in-progress), add CorrelationEngine service, Directus CMS layer, fresh Next.js frontend per `@design/` (editorial navy/cream/gold, tonal layering, Newsreader+Inter, Lucide, no SaaS defaults—OperatorConsole as style reference only). **Not**: Public voter UI.
 
 **Scope**: Supreme Court first (main justices page + deep linked dossiers). Graph + correlation for "everything referenced together" with intelligent reporting. CMS for "pages" (slug-based dynamic routes managed in Directus collections). Adversarial AI loop for high-stakes reports. Later: full jurisdictions, X feed integration, more cities.
 
-**Architecture (Palantir-inspired)**: Supabase (schema + pgvector + RLS), FastAPI + ARQ (extend for judicial extraction, correlation jobs), Directus (on same DB for admin/flows/GraphQL), Next.js 15 (Clerk auth, design system foundation, graph components, dynamic pages). LLMService abstraction (Perplexity primary: Sonar for grounding/correlation, large for writing; adversarial pass with e.g. Reasoning Pro critique or fallback Grok). Correlation service uses cheap models to propose `entity_edges`. Human review queue in Directus/Console.
+**Architecture (Palantir-inspired)**: Supabase (schema + pgvector + RLS), FastAPI + ARQ (extend for judicial extraction, correlation jobs), Directus (on same DB for admin/flows/GraphQL), Next.js 15 (Clerk auth, design system foundation, graph components, dynamic pages). `LLMService` abstraction maps roles to **Sonar model IDs** only: e.g. `CORRELATION_MODEL=sonar`, `WRITER_MODEL=sonar-pro`, `ADVERSARIAL_MODEL=sonar-reasoning-pro`, `RESEARCH_MODEL=sonar-deep-research` for scheduled or on-demand **deep research** (not the default latency-sensitive path). Correlation uses the **cheapest** tier; critique uses a **stronger** Sonar tier with a strict evidence-bound prompt. Human review queue in Directus/Console.
 
 ### Research Insights (goal / architecture + user feedback)
 - **Directus** best for CMS: Layers on your Supabase without schema changes, instant admin/flows for automation (edit → correlation trigger), custom themable to `@design/`, GraphQL ideal for Palantir frontend queries. Self-hosted Docker. (Confirmed via research; strong partner.)
@@ -130,16 +130,16 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 
 - [x] **`races`** — table + unique `(office_label, district, jurisdiction)` in [`supabase/migrations/20260319180000_races_candidates.sql`](supabase/migrations/20260319180000_races_candidates.sql) (RLS on; **service_role** grants only).
 - [x] **`candidates`** — FK to `races`, `dedupe_key` column + unique index; **`briefing.services.persistence.baseline_upsert`** upserts from `NormalizedCandidate` rows (vote.utah + SLCO + Civic voterInfo).
-- [ ] **`entities`** — unified node table: **`type`** (`person` | `bill` | `issue` | `organization` | `race` | …), **`canonical_name`**, **`external_ids`** (JSONB: le.utah.gov bill id, FEC, etc.), **`metadata`** JSONB; dedupe strategy TBD (see Key Questions).
-- [ ] **`entity_edges`** — **`source_entity_id`**, **`target_entity_id`**, **`relation`** (e.g. `sponsored`, `voted_on`, `mentioned_in`, `opposes`, `same_as`); **`provenance`** (claim_id, URL, or manual); optional **`weight`** / **`valid_from`**.
-- [ ] **`dossier_claims`** — atomic claims: claim text, category (e.g. “Voting Record”, “Opposition — Media”, “Bio”, “Dossier — Narrative”), sentiment, **`source_url`** when web-sourced; FK **`candidate_id`**; optional FKs to **`entities`** (subject/object); provenance: **`pipeline_stage`** (`retrieval_sonar` | `writer_agent` | `human_edit`), **`llm_provider`**, **`model_id`**, **`api_surface`** (`sonar` | `agent`), **`prompt_id` / version**, **`retrieved_at`**.
-- [ ] **`rag_chunks`** — **`content`**, **`embedding`** (`vector`); **`source_url`**, **`source_type`** (page, pdf, transcript); optional **`entity_ids`** (UUID[] or join table); **`chunk_index`**; link to raw scrape artifact if stored.
-- [ ] **`intelligence_runs`** — one row per job (scrape, Sonar pass, writer pass, embed batch); **`model_id`**, **`pipeline_stage`**, status, tokens/cost when available; links to affected candidates.
+- [x] **`entities`** — unified node table (minimal enum in [`20260319180000_races_candidates.sql`](supabase/migrations/20260319180000_races_candidates.sql)); extend types / dedupe strategy still TBD (see Key Questions).
+- [x] **`entity_edges`** — landed in [`20260420120000_entities_claims_vectors_graph.sql`](supabase/migrations/20260420120000_entities_claims_vectors_graph.sql): **`source_entity_id`**, **`target_entity_id`**, **`relation`**, **`provenance`**, **`status`** (`proposed` | `accepted` | `rejected`), **`confidence`** / **`weight`** / **`valid_from`**.
+- [x] **`dossier_claims`** — same migration + [`20260420120100_link_officials_claims.sql`](supabase/migrations/20260420120100_link_officials_claims.sql): FKs **`candidate_id`**, **`official_id`**, subject/object **`entities`**; **`pipeline_stage`** enum (`retrieval_sonar` | `writer_sonar` | `critique_sonar` | `human_edit`); LLM provenance columns; **`groundedness_score`**.
+- [x] **`rag_chunks`** — same migration: **`content`**, **`embedding vector(1024)`** (align dim with embed API in Phase 1.5), **`embedding_model_id`**, **`source_url`**, **`source_type`**, **`chunk_index`**, **`content_hash`**.
+- [x] **`intelligence_runs`** — same migrations: **`model_id`**, **`pipeline_stage`**, **`status`**, tokens/cost, **`raw_response`**, **`idempotency_key`**, **`groundedness_score`**, **`requires_human_review`**; FKs **`candidate_id`**, **`official_id`**.
 - [ ] **Migrations / RLS (if Supabase):** enable **`pgvector`**; **RLS on every user-reachable table** if anything uses **`anon` / publishable key**; workers use **`service_role` / secret key** only on trusted hosts — remember it **bypasses RLS**, so enforce org rules in code for sensitive paths.
 - [ ] **Defense in depth:** for opposition-grade tables, consider **`private` (non-exposed) schema** + server-side Postgres only, or minimal RPC with **`SECURITY INVOKER`** and **revoked `EXECUTE` from `anon` / `public`** on sensitive functions ([Hardening the Data API](https://supabase.com/docs/guides/api/hardening-data-api), [Database Functions](https://supabase.com/docs/guides/database/functions)).
 - [ ] **Vectors:** similarity search must respect intended isolation — follow [RAG with Permissions](https://supabase.com/docs/guides/ai/rag-with-permissions); avoid returning raw **embedding vectors** to clients unless required.
 - [ ] **Ongoing:** run **Security Advisor** in Supabase for “RLS disabled” regressions before releases.
-- **Status:** in progress (relational baseline landed; graph + claims + vectors + full RLS review still open)
+- **Status:** in progress (graph + claims + vectors + runs landed 2026-04-20; ANN indexes / `match_*` RPC / entity enum expansion / full RLS review still open)
 
 ### Research Insights (Step 2 — database)
 
@@ -158,20 +158,15 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 
 ### Step 3: Autonomous Researcher & Intelligence (“Deep Dive”)
 
-**Objective:** **Stage 1 — gather; Stage 2 — write.** On **new or stale** candidates, use **Sonar** to pull **grounded, structured facts** (and citations). Then use **Perplexity Agent API** with **tier-one writer models** to turn that evidence into **dossier prose** (sections, executive summary, talking points) **without inventing sources** — every material factual assertion in output should trace to Stage 1 URLs or graph-linked entities. Support **opposition** depth via routing. **Graph + RAG:** extract or normalize **entity mentions** (bills, people, issues) into **`entities` / `entity_edges`**; **chunk** long sources into **`rag_chunks`** and **embed** for retrieval to feed future prompts.
+**Objective:** **Stage 1 — gather; Stage 2 — write.** On **new or stale** candidates, use **Sonar** to pull **grounded, structured facts** (and citations). Then use **the same Sonar Chat Completions API** with a **stronger Sonar model** (and structured output / `response_format` where supported) to turn that evidence into **dossier prose** (sections, executive summary, talking points) **without inventing sources** — every material factual assertion in output should trace to Stage 1 URLs or graph-linked entities. Support **opposition** depth via routing. **Graph + RAG:** extract or normalize **entity mentions** (bills, people, issues) into **`entities` / `entity_edges`**; **chunk** long sources into **`rag_chunks`** and **embed** for retrieval to feed future prompts.
 
-- [ ] **Stage 1 — Retrieval (Sonar only for web-grounded passes):** Prompts **A / B / C** (bio, record, vetting) as today — **`POST /v1/sonar`**; `model` ∈ `sonar` | `sonar-pro` | `sonar-deep-research` | `sonar-reasoning-pro`. Persist as **`dossier_claims`** with **`pipeline_stage=retrieval_sonar`**; parse bill/person/issue hooks into **`entities` + `entity_edges`** where possible.
-- [ ] **Stage 2 — Dossier writing (Agent API, frontier models):** Input = **structured Sonar JSON** + optional **top-k `rag_chunks`** (same candidate / linked entities). Single or multi-call flow (per-section JSON or one narrative). Persist as claims or dedicated narrative rows with **`pipeline_stage=writer_agent`**. **Target writer roster** (exact **`provider/model`** strings must match live [Agent models](https://docs.perplexity.ai/docs/agent-api/models) at implementation):
-  - **OpenAI** — e.g. **GPT-5.4** class
-  - **Anthropic** — e.g. **Claude 4.6** class
-  - **Google** — e.g. **Gemini 3.1 Pro** class
-  - **xAI** — e.g. **Grok 4.20** class  
-  Config **`WRITER_MODEL`** + **`WRITER_FALLBACK_CHAIN`** (Agent supports fallback lists per docs).
-- [ ] **Prompt D — Briefing / synthesis:** Can run on **Stage 2** output or directly on Stage 1 claims; prefer **writer model** for fluency, **Sonar** if fresh web check required.
+- [ ] **Stage 1 — Retrieval (grounded Sonar passes):** Prompts **A / B / C** (bio, record, vetting) — Chat Completions with `model` per [Sonar models](https://docs.perplexity.ai/docs/sonar/models) (e.g. `sonar`, `sonar-pro`, `sonar-deep-research`, `sonar-reasoning-pro` — confirm current IDs in docs). Persist as **`dossier_claims`** with **`pipeline_stage=retrieval_sonar`**; parse bill/person/issue hooks into **`entities` + `entity_edges`** where possible.
+- [ ] **Stage 2 — Dossier writing (Sonar only):** Input = **structured Stage 1 JSON** + optional **top-k `rag_chunks`**. Single or multi-call flow (per-section JSON or one narrative). Persist as claims or dedicated narrative rows with **`pipeline_stage=writer_sonar`** (rename from `writer_agent` in code/docs as you implement). Config **`WRITER_MODEL`** (default **`sonar-pro`**) + optional **`WRITER_FALLBACK_CHAIN`** of **other Sonar model IDs** for failover (see Perplexity **model fallback** docs for your SDK path).
+- [ ] **Prompt D — Briefing / synthesis:** Can run on **Stage 2** output or directly on Stage 1 claims; prefer **`WRITER_MODEL`** for fluency, a **fresh Sonar retrieval** pass if new web grounding is required.
 - [ ] **Routing — who gets what:** GOP-flagged → A + lighter C; **opposition** → full A/B/C + stronger Stage 2 vetting tone (still source-grounded). Encode in config.
 - [ ] **RAG hygiene:** embedding model choice (dims must match `pgvector` column); chunk size / overlap; re-embed when source changes; store **`embedding_model_id`** on `rag_chunks` for future migrations.
-- [ ] **Structured JSON:** **`json_schema`** on Sonar where supported; same for Agent writer calls; validate before insert; store **raw** responses for debug.
-- [ ] **Model testing harness:** **`MODEL_MATRIX`** includes **Sonar variants** and **each writer model**; in staging, run fixed **golden** candidates and score **groundedness** (citations present), **JSON validity**, **style** rubric.
+- [ ] **Structured JSON:** **`json_schema`** / `response_format` on Sonar where supported for both retrieval and writer passes; validate before insert; store **raw** responses for debug.
+- [ ] **Model testing harness:** **`MODEL_MATRIX`** includes **each Sonar tier** you deploy (`CORRELATION_MODEL`, `WRITER_MODEL`, `ADVERSARIAL_MODEL`, optional deep-research); in staging, run fixed **golden** candidates and score **groundedness** (citations present), **JSON validity**, **style** rubric.
 - [ ] **Error handling:** retries, rate limits, partial success (e.g. Sonar OK, writer fails → keep claims, queue retry).
 - [ ] **Groundedness checks (staging → prod gates):** automated metrics in the spirit of **RAGAS faithfulness** / NLI entailment on **atomic claims** vs Stage 1 evidence; track **citation coverage** and **citation validity** (URL/snippet supports sentence — see e.g. [FACTUM](https://arxiv.org/abs/2601.05866) for long-form citation QA research context).
 - [ ] **Optional critic pass:** small verifier model or rule step when scores fall below threshold (inspired by **Self-RAG**-style retrieve → generate → critique — [paper](https://arxiv.org/abs/2310.11511)).
@@ -219,12 +214,12 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 
 ### Phase 5: LLM Abstraction, Perplexity Primary + Adversarial Critique Pipeline
 
-**Objective:** Make Perplexity the one-stop (Sonar Reasoning Pro for correlation/grounding, Agent for drafting/analysis). Abstract for easy swap. Implement adversarial loop for reports (draft → critique with different model/pedigree → synthesis) + human review. Support X feed.
+**Objective:** Make **Perplexity Sonar** the one-stop: config maps **roles** → **Sonar model IDs** (correlation, writer, adversarial). Abstract for easy swap. Implement adversarial loop for reports (draft → critique with **stronger Sonar tier + critique prompt** → synthesis) + human review. Support X feed.
 
 **Bite-sized Tasks (TDD style):**
-1. Create `services/llm/base.py` + `perplexity.py` (config-driven models, normalize to your schemas, fallback chain). Test with dummy calls.
-2. Update existing Sonar/Agent calls to new abstraction. Add cheap "correlation" model option.
-3. Implement `AdversarialCritiqueService`: Primary draft prompt → Critique prompt ("find flaws vs sources, missing cross-refs, unsubstantiated") using different model (e.g. Reasoning Pro or configured Grok). Synthesis pass. Add to pipeline for judicial dossiers.
+1. Create `services/llm/base.py` + `perplexity.py` (config-driven **Sonar** models only, normalize to your schemas, Sonar-only fallback chain). Test with dummy calls.
+2. Update existing LLM calls to the abstraction. Wire **`CORRELATION_MODEL`** to the cheapest Sonar tier used in production.
+3. Implement `AdversarialCritiqueService`: Primary draft → Critique ("find flaws vs sources, missing cross-refs, unsubstantiated") using **`ADVERSARIAL_MODEL`** (e.g. **`sonar-reasoning-pro`**). Synthesis pass. Add to pipeline for judicial dossiers.
 4. Add X integration stub (API client for posts related to subject; store as claims or feed data). Perplexity as backup for news.
 5. Human review queue: New `intelligence_reviews` table or Directus flow; console view.
 - **Status:** pending
@@ -295,10 +290,10 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 | Decision | Rationale |
 |----------|-----------|
 | **Directus for CMS** | Best fit for existing Supabase schema, instant admin/flows/GraphQL, self-hosted, customizable to `@design/`. Enables easy page management + Palantir automation without reinventing. |
-| **Perplexity primary + abstraction** | One-stop shop per request. Sonar Reasoning Pro for correlation/critique. LLMService makes swap trivial later. |
-| **Adversarial critique loop** | Draft (Perplexity) → different pedigree critique → synthesis + human. Mitigates risks noted in research; ensures high-quality grounded judicial reports. |
+| **Perplexity Sonar + abstraction** | One API family per [Sonar models](https://docs.perplexity.ai/docs/sonar/models). Role-based env vars (`CORRELATION_MODEL`, `WRITER_MODEL`, `ADVERSARIAL_MODEL`, `RESEARCH_MODEL` for `sonar-deep-research`-class runs). LLMService keeps a future non-Perplexity swap possible without rewriting call sites. |
+| **Adversarial critique loop** | Draft (e.g. `sonar-pro`) → critique (e.g. `sonar-reasoning-pro` + strict prompt) → synthesis + human. Same vendor; different tier and prompt. |
 | **Fresh Next.js Operator Console** | Starts clean; strictly applies `@design/` (tonal, editorial, Lucide, no defaults). OperatorConsole as reference only. Clerk for auth. |
-| **CorrelationEngine service with cheap models** | Enables "ALWAYS THINK PALANTIR" — scalable cross-referencing and intelligent reporting without high LLM costs. Graph + RAG + adversarial = connected insights. |
+| **CorrelationEngine + cheap Sonar tier** | Enables "ALWAYS THINK PALANTIR" — scalable cross-referencing and intelligent reporting without always using the heaviest Sonar tier. Graph + RAG + adversarial = connected insights. |
 | **Supreme Court main page + deep dossiers first** | Matches focus. Grid overview + tabbed details with graph/feed delivers Palantir UX immediately. |
 | **Self-hosted Directus + local Supabase** | Per your preference. Everything possible local first. |
 | **"Pages" = Directus items → dynamic Next routes** | Easy CMS edit/create/replace; slug-based, publish-controlled, triggers backend. |
@@ -308,11 +303,11 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 ## Errors Encountered
 | Error | Attempt | Resolution |
 |-------|---------|------------|
-| — | — | — |
+| Local `supabase db reset` then Directus `401` on scripts | 1 | Postgres wipe clears Directus users; UI password may not match `cms/.env` `ADMIN_*`. Log in at `http://127.0.0.1:8055`, align credentials, then run `register-app-collections.ps1` with the **same** email/password as the UI. See `plans/04_foundation_supabase_directus.md` post-reset checklist. |
 
 ## Notes
-- **ALWAYS THINK PALANTIR**: Every phase prioritizes graph, correlation (cheap LLM), cross-references, intelligent synthesis, interactive viz, connected reporting. Re-read this + findings.md before decisions.
-- **Re-read before any work**: `plans/00_task_plan.md`, `plans/findings.md`, `plans/progress.md`, `@design/README.md`.
+- **ALWAYS THINK PALANTIR**: Every phase prioritizes graph, correlation (cheap LLM), cross-references, intelligent synthesis, interactive viz, connected reporting. Re-read this + `plans/02_findings.md` before decisions.
+- **Re-read before any work**: `plans/00_task_plan.md`, `plans/02_findings.md`, `plans/03_progress.md`, `@design/README.md`.
 - Log every error here with 3-strike protocol. Update statuses after phases. Use planning-with-files hooks.
 - **Execution**: Plan is now detailed, bite-sized where possible, TDD-ready, references exact files/skills. Prefer subagent-driven-development for this session (fresh subagent per phase/task with review) or parallel executing-plans session. **Which approach? Start with Phase 5 or 6?**
 - Design system non-negotiable for all UI/CMS. Governance/human review critical for judicial/opposition.
@@ -320,7 +315,7 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 
 1. **Hosting:** Where will the **API + worker** run (single VPS, container pair, split API vs worker tiers)? Same question for **cron** vs in-process scheduling.
 2. **Identity:** How do we key “same candidate” across re-scrapes (name normalization, office, district composite)?
-3. **Perplexity surfaces:** **Sonar** = Stage 1 only (four models); **Agent** = Stage 2 writers + eval matrix — confirm tier limits / RPM for **both** and daily volume (see `findings.md`).
+3. **Perplexity:** Confirm tier limits / RPM for **each Sonar model** you use (`sonar`, `sonar-pro`, `sonar-reasoning-pro`, `sonar-deep-research`, etc.) and daily volume (see `findings.md` + current pricing docs).
 4. **Opposition rules:** How is “opposition” determined (party from filing vs manual tag vs race-level)? Who approves **Stage 2** dossiers before internal distribution?
 5. **Model eval:** Rubric for **retrieval** (recall of URLs, entity extraction quality) vs **writing** (groundedness, JSON validity, tone) — separate gates for Sonar vs writer promotion.
 6. **Graph + RAG:** **Entity resolution** (same person across offices/years)? **Canonical bill IDs** (Utah le.utah.gov)? **Embedding model** and re-embed policy?
@@ -337,10 +332,10 @@ Campaign and opposition research work can implicate **election law**, **privacy*
 | Headless/crawl for official sites | Government pages often dynamic; static HTTP may be insufficient |
 | Civic API: elections / voterInfo / divisions only | Representatives API methods turned down — plan supplemental data accordingly |
 | Perplexity: `json_schema` response_format | Documented structured output path vs prompt-suffixed JSON only |
-| Sonar vs Agent API | Sonar = four grounded models only; Agent = multi-provider A/B via one key |
+| Sonar-only vs multi-vendor | **Product default:** Sonar Chat Completions only ([models](https://docs.perplexity.ai/docs/sonar/models)). Agent API / third-party models are out of scope until explicitly needed. |
 | Opposition + GOP routing | Same claims schema; metadata + prompts differentiate use cases |
 | Cloudflare vs local Playwright | CF = ops offload + REST/`/json` option; bot signaling + caching + pricing tradeoffs — evaluate per site |
-| Two-stage LLM | Sonar = grounded facts; Agent frontier models = dossier prose; provenance via `pipeline_stage` |
+| Two-stage LLM | Sonar = grounded facts (Stage 1); stronger Sonar tier = dossier prose (Stage 2); provenance via `pipeline_stage` |
 | Graph + pgvector | Relational edges + `rag_chunks.embedding` prepare for traverse + semantic retrieval without locking a graph DB vendor yet |
 | **Backend-first** | FastAPI + worker + Supabase service role; no campaign UI in Phase 1 |
 | **Supabase only (no “plain Postgres” app DB)** | **Local Supabase CLI** (`supabase init` / `supabase start`) for dev parity with PostgREST + migrations + Studio; hosted Supabase for prod — avoids drifting to ad-hoc Postgres-only stacks |

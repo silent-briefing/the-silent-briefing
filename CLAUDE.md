@@ -2,6 +2,14 @@
 
 > **Authoritative reference for all AI agents and contributors.** Re-read before major decisions, new phases, or after any context gap. Always think **Palantir for Utah** — everything that can be referenced together should be, reported intelligently.
 
+### Agent automation (do not punt to the human)
+
+When a scripted path exists, **run it** (from the repo root in a terminal) and fix failures — do not ask the user to copy/paste env vars or click through Directus unless a secret is truly missing locally.
+
+- After **`supabase db reset`** (or when repairing local Directus): run **`scripts/dev-db-reset.sh`** (macOS/Linux) or **`scripts/dev-db-reset.ps1`** (Windows), not reset alone.
+- Directus repair + collection registration reads **`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `cms/.env`** automatically (or `DIRECTUS_EMAIL` / `DIRECTUS_PASSWORD` if set).
+- On macOS/Linux, ensure shell scripts are executable once: `chmod +x scripts/*.sh cms/scripts/*.sh`.
+
 ---
 
 ## Project Identity
@@ -158,6 +166,16 @@ npx create-directus-extension@latest
 - RBAC in Directus mirrors Supabase RLS roles: admins see all, operators see published content, viewers read-only.
 - Extensions in `cms/extensions/`. Each extension one responsibility, ~200 LOC.
 
+**Local env & repair (same Postgres as Supabase):**
+
+- **Directus configuration is `cms/.env` only** (loaded by `docker-compose.yml`). Required in Directus 10+: **`KEY`** (encryption for stored secrets) and **`SECRET`** (JWT/session signing). Keep both **stable** per machine/environment; changing **`KEY`** against an existing Directus system tables can yield **`INTERNAL_SERVER_ERROR`**. After `supabase db reset`, a **fresh** DB with an unchanged `KEY`/`SECRET` is fine.
+- **Do not put Directus `KEY` in repo-root `.env.local`** — that file is for Supabase keys, backend, and convenience vars (`DIRECTUS_URL`, etc.). The container never reads `.env.local`.
+- **`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `cms/.env`** are used at first bootstrap and by **`cms/scripts/register-app-collections.*`** when `DIRECTUS_*` login env vars are unset.
+- **Never run `supabase db reset` in isolation** if Directus shares the DB. Use:
+  - **macOS/Linux:** `bash scripts/dev-db-reset.sh` (set `SKIP_DIRECTUS=1` to skip Directus repair).
+  - **Windows:** `.\scripts\dev-db-reset.ps1`
+- Under the hood, repair runs **`cms/scripts/sync-directus-after-supabase-reset.(sh|ps1)`**: restart Directus, wait on `/server/health`, `npx directus bootstrap`, `schema apply` on `cms/schema/snapshot-baseline.yaml` (non-fatal if metadata already exists), then register app collections. Details and pitfalls: `plans/04_foundation_supabase_directus.md`.
+
 ---
 
 ## Authentication — Clerk
@@ -181,25 +199,25 @@ CLERK_SECRET_KEY=sk_...
 
 ## AI & Intelligence Architecture
 
-### Primary Provider: Perplexity
+### Primary Provider: Perplexity (Sonar)
 
-**Perplexity is the one-stop shop for all AI.** One API key, one abstraction.
+**Perplexity Sonar (Chat Completions) is the default stack** — one vendor, one API key, tiered models via config.
 
 ```
-Stage 1 — Evidence gathering:  Perplexity Sonar / Sonar Pro / Sonar Reasoning Pro
-Stage 2 — Dossier writing:     Perplexity Agent API (frontier model: Claude 4 class)
-Stage 3 — Adversarial review:  Perplexity Agent API (adversarial model: different pedigree, e.g. Grok 4 class)
-Stage 4 — Synthesis:           Final pass resolving conflicts; human review queue
+Stage 1 — Evidence / retrieval:  Sonar / Sonar Pro / Sonar Reasoning Pro (as configured)
+Stage 2 — Dossier writing:       Sonar Pro (or stronger Sonar tier) — grounded in Stage 1
+Stage 3 — Adversarial review:    Sonar Reasoning Pro (or distinct Sonar tier) — critique only
+Stage 4 — Synthesis:             Final pass resolving conflicts; human review queue
 ```
 
-**Abstraction:** `briefing/services/llm/` contains `LLMService` protocol with methods for `retrieve`, `generate`, `critique`. Swap provider by updating config (`LLM_PROVIDER`, `WRITER_MODEL`, `ADVERSARIAL_MODEL`). Never hardcode provider names in business logic.
+**Abstraction:** `briefing/services/llm/` contains `LLMService` protocol with methods for `retrieve`, `generate`, `critique`. Configure tiers via `WRITER_MODEL`, `ADVERSARIAL_MODEL`, `CORRELATION_MODEL`, `RESEARCH_MODEL` (see **Environment Variables**). Never hardcode provider names in business logic.
 
 ### Adversarial Report Architecture
 
 For every final dossier/brief (judicial especially):
 
-1. **Primary analysis pass** — e.g., Claude 4 class (via Perplexity Agent). Produces structured dossier sections grounded in Stage 1 evidence.
-2. **Adversarial critique pass** — different pedigree (e.g., Grok 4 class via Perplexity Agent). Prompted to: find contradictions with sources, identify unsubstantiated claims, surface missing cross-references, challenge conclusions. Returns structured critique JSON.
+1. **Primary analysis pass** — writer tier (e.g. `WRITER_MODEL`). Produces structured dossier sections grounded in Stage 1 evidence.
+2. **Adversarial critique pass** — stronger / distinct Sonar tier (e.g. `ADVERSARIAL_MODEL`). Prompted to: find contradictions with sources, identify unsubstantiated claims, surface missing cross-references, challenge conclusions. Returns structured critique JSON.
 3. **Debate synthesis** — Third call (or orchestrated multi-turn) reconciling primary + adversarial. "Where they agree = high confidence. Where they disagree = flag for human review."
 4. **Human review queue** — Flagged items surface in Directus/Console with confidence score, primary claim, adversarial challenge, resolution status.
 
@@ -280,23 +298,27 @@ For every final dossier/brief (judicial especially):
 
 ## Environment Variables
 
-Never commit secrets. Use `.env.local` for local dev. Supabase local defaults:
+Never commit secrets.
+
+- **`cms/.env`** — Directus (Docker): `KEY`, `SECRET`, `DB_*`, `ADMIN_*`, `PUBLIC_URL`, `PORT`, hooks, CORS. Copy from `cms/.env.example` and generate secrets (`openssl rand -base64 32`).
+- **`.env.local` (repo root)** — Supabase local keys, `DATABASE_URL`, backend (`PERPLEXITY_*`, etc.), optional **`DIRECTUS_URL`** for scripts — **not** a substitute for `cms/.env`.
+
+Supabase local defaults (also in `.env.local`):
 ```
 SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_ANON_KEY=<from supabase start output>
 SUPABASE_SERVICE_ROLE_KEY=<from supabase start output>
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
-DIRECTUS_DB_CONNECTION_STRING=postgresql://postgres:postgres@127.0.0.1:54322/postgres
-DIRECTUS_SECRET=<generate with openssl rand -base64 32>
-
 CLERK_SECRET_KEY=sk_...
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 
 PERPLEXITY_API_KEY=pplx-...
-WRITER_MODEL=claude-sonnet-4-5               # primary dossier writer (via Agent API)
-ADVERSARIAL_MODEL=grok-4                     # adversarial critique model
-CORRELATION_MODEL=sonar                      # cheap model for bulk correlation
+# Perplexity Sonar only — IDs from https://docs.perplexity.ai/docs/sonar/models
+WRITER_MODEL=sonar-pro                       # primary dossier writer (Sonar Chat Completions)
+ADVERSARIAL_MODEL=sonar-reasoning-pro        # adversarial / critique pass (stronger Sonar tier)
+CORRELATION_MODEL=sonar                      # cheap tier for bulk correlation / edge proposals
+RESEARCH_MODEL=sonar-deep-research           # deep research / heavy evidence passes (not default hot path)
 
 X_API_BEARER_TOKEN=...                       # X API v2 (when available)
 ```
@@ -307,10 +329,10 @@ X_API_BEARER_TOKEN=...                       # X API v2 (when available)
 
 - Human review gate before distributing opposition or judicial dossiers.
 - Retain `source_url` on every claim. No unsubstantiated assertions in final output.
-- Adversarial debate logged in `intelligence_runs` with both model outputs + resolution.
+- Adversarial pass logged in `intelligence_runs` with draft + critique (Sonar tiers) + resolution.
 - Do not expose `service_role` key in clients. Backend only.
 - Before production: legal/compliance sign-off on data sources and outreach.
 
 ---
 
-*Last updated: 2026-04-19. Update when major architectural decisions change.*
+*Last updated: 2026-04-19 (Directus automation, env split, Sonar-only LLM narrative). Update when major architectural decisions change.*

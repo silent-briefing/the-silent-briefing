@@ -26,6 +26,30 @@ collections:
       versioning: false
     schema:
       name: candidates
+  - collection: dossier_claims
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: dossier_claims
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: article
+      item_duplication_fields: null
+      note: Supabase public.dossier_claims
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: dossier_claims
   - collection: entities
     meta:
       accountability: all
@@ -50,6 +74,54 @@ collections:
       versioning: false
     schema:
       name: entities
+  - collection: entity_edges
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: entity_edges
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: share
+      item_duplication_fields: null
+      note: Supabase public.entity_edges
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: entity_edges
+  - collection: intelligence_runs
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: intelligence_runs
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: psychology
+      item_duplication_fields: null
+      note: Supabase public.intelligence_runs
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: intelligence_runs
   - collection: jurisdictions
     meta:
       accountability: all
@@ -122,6 +194,30 @@ collections:
       versioning: false
     schema:
       name: races
+  - collection: rag_chunks
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: rag_chunks
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: sticky_note_2
+      item_duplication_fields: null
+      note: Supabase public.rag_chunks
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: rag_chunks
 fields: []
 systemFields:
   - collection: directus_activity

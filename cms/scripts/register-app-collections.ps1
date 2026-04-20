@@ -17,6 +17,18 @@ param(
     [string] $Token = $env:DIRECTUS_ADMIN_TOKEN
 )
 
+# Auto-fill from cms/.env ADMIN_* when not using a static token (same as Directus bootstrap).
+$cmsEnv = Join-Path $PSScriptRoot "..\.env"
+if (-not $Token -and ((-not $Email) -or (-not $Password)) -and (Test-Path $cmsEnv)) {
+    $adm = @{}
+    Get-Content $cmsEnv | ForEach-Object {
+        if ($_ -match '^\s*ADMIN_EMAIL=(.+)$') { $adm.Email = $matches[1].Trim().Trim('"').Trim("'") }
+        if ($_ -match '^\s*ADMIN_PASSWORD=(.+)$') { $adm.Password = $matches[1].Trim().Trim('"').Trim("'") }
+    }
+    if (-not $Email -and $adm.Email) { $Email = $adm.Email }
+    if (-not $Password -and $adm.Password) { $Password = $adm.Password }
+}
+
 function Get-AccessToken {
     if ($Email -and $Password) {
         $loginBody = @{
@@ -81,7 +93,11 @@ $collections = @(
     @{ name = "candidates"; icon = "person"; note = "Supabase public.candidates" },
     @{ name = "entities"; icon = "hub"; note = "Supabase public.entities" },
     @{ name = "jurisdictions"; icon = "account_tree"; note = "Supabase public.jurisdictions" },
-    @{ name = "officials"; icon = "badge"; note = "Supabase public.officials" }
+    @{ name = "officials"; icon = "badge"; note = "Supabase public.officials" },
+    @{ name = "entity_edges"; icon = "share"; note = "Supabase public.entity_edges" },
+    @{ name = "dossier_claims"; icon = "article"; note = "Supabase public.dossier_claims" },
+    @{ name = "rag_chunks"; icon = "sticky_note_2"; note = "Supabase public.rag_chunks" },
+    @{ name = "intelligence_runs"; icon = "psychology"; note = "Supabase public.intelligence_runs" }
 )
 
 foreach ($c in $collections) {
