@@ -15,7 +15,7 @@
 ## Current Status
 
 - Supabase: local migrations applied (`races`/`candidates`/`entities`, `jurisdictions`/`officials`, `directus_user` + search_path); keys in `.env.local`
-- Directus: Docker Compose on port 8055; system schema `directus`; baseline snapshot in `cms/schema/snapshot-baseline.yaml` (configure display templates in Admin when ready)
+- Directus: Docker Compose on port 8055; baseline snapshot in `cms/schema/snapshot-baseline.yaml`. **Gap:** Directus 11.17 bootstrap placed system tables in `public` (verify: `SELECT schemaname FROM pg_tables WHERE tablename = 'directus_collections'`). `DB_SCHEMA=directus` did not isolate them — follow-up before prod (clean install experiment or upstream issue).
 - Backend: `backend/` FastAPI stub with `POST /v1/intelligence/refresh` for CMS hook
 
 ---
@@ -682,7 +682,7 @@ git commit -m "feat: add intelligence refresh stub route for directus webhook"
 After completing Tasks 1-8:
 
 - Supabase local stack running with full schema (races, candidates, entities, jurisdictions, officials, directus grants).
-- Directus running via Docker, connected to same Postgres, system tables in `directus` schema.
+- Directus running via Docker, connected to same Postgres (system tables currently in `public` — see Errors; target is `directus` schema).
 - Officials hierarchy (jurisdiction_level, office_type enums, jurisdictions seed) ready for data.
 - Directus collections configured, schema snapshots committed.
 - LLM refresh flow wired: Directus save → backend `/v1/intelligence/refresh` → (stub for now, real ARQ job in Phase 2).
@@ -693,10 +693,12 @@ After completing Tasks 1-8:
 ## Errors Encountered
 
 
-| Error | Attempt | Resolution |
-| ----- | ------- | ---------- |
-| Directus 11 bootstrap failed as `directus_user` (`permission denied for schema public` / migration `Add Project Owner` TypeError) | 1 | Added `search_path` migration; still failed introspecting `public` during internal migrations. **Local dev:** connect Directus as Supabase `postgres` user (`cms/.env`); keep `directus_user` migration for production-like grants. |
-| `supabase db reset` exits 502 restarting containers | 1 | Harmless locally; migrations + seed apply; run `supabase status` to confirm stack. |
-| Original `20260319180000_races_candidates.sql` missing from repo | 1 | Recreated migration from `plans/00_task_plan.md` + added minimal `entities` so Task 3 `officials.entity_id` FK applies. |
+| Error                                                                                                                             | Attempt | Resolution                                                                                                                                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directus 11 bootstrap failed as `directus_user` (`permission denied for schema public` / migration `Add Project Owner` TypeError) | 1       | Added `search_path` migration; still failed introspecting `public` during internal migrations. **Local dev:** connect Directus as Supabase `postgres` user (`cms/.env`); keep `directus_user` migration for production-like grants. |
+| `supabase db reset` exits 502 restarting containers                                                                               | 1       | Harmless locally; migrations + seed apply; run `supabase status` to confirm stack.                                                                                                                                                  |
+| Original `20260319180000_races_candidates.sql` missing from repo                                                                  | 1       | Recreated migration from `plans/00_task_plan.md` + added minimal `entities` so Task 3 `officials.entity_id` FK applies.                                                                                                             |
+| `supabase db diff` noisy after Directus bootstrap                                                                                  | 1       | Directus creates `directus_*` tables and Supabase grants outside migration files; diff reflects that. Use diff for migration-only schema, or exclude Directus-managed objects.                                                      |
+| `DB_SCHEMA=directus` but system tables landed in `public` (Directus 11.17)                                                         | 1       | Documented in Current Status; needs follow-up (clean install experiment, env precedence, or upstream issue).                                                                                                                        |
 
 
