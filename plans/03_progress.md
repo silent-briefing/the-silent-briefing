@@ -40,6 +40,16 @@ Local run and deployment walkthrough: [`README.md`](../README.md) at repo root.
 **2026-04-20 — Phase 0 Directus collections**
 - `cms/scripts/register-app-collections.ps1` run successfully; Directus **Content** lists app collections.
 
+**2026-04-20 — Phase 1 tranche 2 (1.4 Ballotpedia retention, `executing-plans`)**
+- `backend/briefing/services/extraction/retention.py`: fetch Ballotpedia justice pages, parse **Elections** retention voteboxes, golden check (Hagen + Pohlman 2020 ~83% Yes).
+- Worker: `python -m briefing.worker retention-extraction --dry-run|--persist` (optional `--slugs`). Inserts `dossier_claims` with `category=Retention Voting`, `pipeline_stage=retrieval_sonar`. Chief justice pages may lack voteboxes on Ballotpedia (0 rows until another source).
+- Plan updates: `plans/01_expanded_silent_briefing_platform_plan.md` task 1.4 marked done.
+
+**2026-04-20 — Phase 1 tranche 3 (1.5–1.6 opinions + LLM, `executing-plans`)**
+- `opinions.py` + worker `opinion-ingestion`: legacy UT Supreme PDF index → pypdf → chunks → Perplexity embeddings → `rag_chunks`; migration `20260420140000_rag_chunks_ann_match.sql` (HNSW + `match_rag_chunks`).
+- `services/llm/base.py`, `perplexity.py`: `LLMService` Protocol, `/v1/embeddings` + `/v1/sonar`; config `PERPLEXITY_API_KEY`, `EMBEDDING_*`.
+- `uv add pypdf pytest respx`; `uv run pytest tests/` (2 tests). `opinion-ingestion --dry-run` validates golden chunk count without API/DB.
+
 **2026-04-19 — Plans + stack alignment (post `db reset`)**
 - `supabase db reset` reapplied migrations + seed; `supabase status` healthy (transient CLI 502 on container restart is a known local flake — confirm with `supabase status`).
 - **Directus:** After Postgres wipe, admin credentials often **do not** match `cms/.env` `ADMIN_*` if the account was created or changed in the browser. `POST /auth/login` with `.env` alone can return **401** until the password in use matches the UI (see `plans/04_foundation_supabase_directus.md` post-reset checklist). `docker compose restart directus` run; re-registration / password alignment left to operator.

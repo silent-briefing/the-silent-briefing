@@ -11,7 +11,9 @@ alwaysApply: false
 - **Always use Supabase CLI** for all DB operations — never direct SQL in production without a migration.
 - Local dev: `supabase start` → API at `http://127.0.0.1:54321`, DB at `postgresql://postgres:postgres@127.0.0.1:54322/postgres`, Studio at `http://127.0.0.1:54323`.
 - Create migrations: `supabase migration new <descriptive-name>`.
-- Apply: `supabase db push` (hosted) or `supabase db reset` (local, destructive).
+- **Local day-to-day:** `supabase migration up` or `scripts/dev-db-migrate.sh` / `dev-db-migrate.ps1` — applies pending migrations **without** wiping Postgres (Directus survives).
+- **Local full replay (rare):** `supabase db reset` — then run `scripts/dev-db-reset.*` so Directus is repaired.
+- **Hosted:** `supabase db push`.
 - Never skip `supabase db diff` before pushing to verify migration.
 - RLS on every table that is user-reachable via the Data API (anon/publishable key).
 - `service_role` key backend-only. Never in client bundles.

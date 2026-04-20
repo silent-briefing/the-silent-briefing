@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Full local reset: Supabase migrations + Directus repair. macOS / Linux.
-# Windows: use dev-db-reset.ps1
+# Full local reset (destructive): wiped DB + all migrations + Directus repair.
+# Day-to-day: ./scripts/dev-db-migrate.sh — applies pending migrations only; Directus stays intact.
+# Windows: dev-db-reset.ps1
 #
 # Optional: SKIP_DIRECTUS=1
 

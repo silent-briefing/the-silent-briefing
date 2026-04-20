@@ -1,5 +1,7 @@
-# Full local database reset: Supabase migrations + seed, then repair Directus.
-# Prefer this over running `supabase db reset` alone — the latter wipes Directus's tables too.
+# Full local database reset: replays ALL migrations on a wiped DB, then repairs Directus.
+# Day-to-day dev: use .\scripts\dev-db-migrate.ps1 instead (applies pending migrations only; keeps Directus).
+#
+# Prefer this script over running `supabase db reset` alone — the latter wipes Directus without repair.
 #
 # Usage (from repo root):
 #   .\scripts\dev-db-reset.ps1

@@ -18,6 +18,12 @@
 - Directus: Docker Compose on port **8055**; collection metadata snapshot `cms/schema/snapshot-baseline.yaml`; script `cms/scripts/register-app-collections.ps1` activates app tables in the Studio sidebar — **operator confirmed successful run** (Content shows app collections).
 - Backend: `backend/` FastAPI stub with `POST /v1/intelligence/refresh` for CMS hook
 
+### Day-to-day: apply migrations without wiping Directus
+
+For new migration files, prefer **`scripts/dev-db-migrate.sh`** (macOS/Linux) or **`scripts/dev-db-migrate.ps1`** (Windows). That runs **`supabase migration up`**, which applies **only pending** SQL and leaves Directus admin users and system tables intact. Then **`cms/scripts/sync-directus-after-migration.*`** waits for Directus health and runs **`register-app-collections`** when `ADMIN_*` / `DIRECTUS_*` credentials are available.
+
+Reserve **`dev-db-reset.*`** for rare cases: broken migration history, need a clean replay, or first-time bring-up after a deliberate wipe.
+
 ### After `supabase db reset` (Postgres recreated)
 
 Directus stores **its own system tables in the same Postgres** as Supabase. A reset deletes them. The Directus container may also keep **stale connections** or a half-initialized state, which often shows up as **GraphQL / API `INTERNAL_SERVER_ERROR`** until you reinstall and reapply metadata.
@@ -292,10 +298,15 @@ CREATE TRIGGER set_updated_at_officials
 **Step 3: Apply migration**
 
 ```bash
-supabase db reset
+# Normal dev (pending migration only; keeps Directus):
+./scripts/dev-db-migrate.sh
+# Or: supabase migration up
+
+# Full replay on a wiped DB only when needed:
+# supabase db reset
 ```
 
-Expected: all migrations apply cleanly including the new one.
+Expected: the new migration applies cleanly. Use **`supabase db reset`** only when you intentionally replay the full chain (then run **`dev-db-reset.*`** to repair Directus).
 
 **Step 4: Verify in Studio**
 

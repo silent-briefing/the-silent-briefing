@@ -23,19 +23,19 @@
 ## Confirmed Decisions (from user Q&A)
 
 
-| Question                   | Answer                                                                                  | Decision                                                                                                                                             |
-| -------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CMS choice                 | Directus — user agreed, will learn                                                      | **Directus** self-hosted via Docker on existing Supabase Postgres                                                                                    |
-| Frontend                   | Start fresh; OperatorConsole kit is reference only                                      | **New Next.js app** from scratch using design system CSS/assets                                                                                      |
-| Auth                       | Clerk                                                                                   | **Clerk** for all operator console routes                                                                                                            |
-| AI provider                | Perplexity **Sonar** only for v1; swap later if needed                                  | **Sonar** Chat Completions for all roles; abstracted `LLMService`; see [Sonar models](https://docs.perplexity.ai/docs/sonar/models)                  |
-| Adversarial AI             | Stronger Sonar tier + critique prompt vs draft tier (same API family)                    | **Adversarial pipeline:** Primary draft (`WRITER_MODEL`, e.g. `sonar-pro`) → Critique (`ADVERSARIAL_MODEL`, e.g. `sonar-reasoning-pro`) → Synthesis → Human review queue in Directus |
-| Feeds                      | X + Perplexity                                                                          | **X API v2** when available + **Perplexity Sonar** for news aggregation; `FeedService` abstraction                                                   |
-| Initial focus              | Supreme Court flagship, Palantir thinking                                               | **Utah Supreme Court** Judicial Watch page as MVP Palantir demonstration                                                                             |
-| Schema                     | Support hierarchies preemptively                                                        | `jurisdiction_level` enum + `office_type` enum + `jurisdictions` (parent hierarchy) + `officials` table                                              |
-| Tooling                    | `bun` not node; `uv` not pip                                                            | `bun` everywhere JS/TS; `uv` everywhere Python; `npx` ONLY for Directus extension scaffold                                                           |
-| Hosting                    | Self-hosted for development                                                             | Docker Compose: Supabase local + Directus + backend + console                                                                                        |
-| Cheaper AI for correlation | Use cheaper **Sonar** tier for bulk edge extraction                                      | `CORRELATION_MODEL=sonar`; `WRITER_MODEL=sonar-pro`; `ADVERSARIAL_MODEL=sonar-reasoning-pro`; `RESEARCH_MODEL=sonar-deep-research` for deep research jobs (tune per [Sonar models](https://docs.perplexity.ai/docs/sonar/models)) |
+| Question                   | Answer                                                                | Decision                                                                                                                                                                                                                          |
+| -------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CMS choice                 | Directus — user agreed, will learn                                    | **Directus** self-hosted via Docker on existing Supabase Postgres                                                                                                                                                                 |
+| Frontend                   | Start fresh; OperatorConsole kit is reference only                    | **New Next.js app** from scratch using design system CSS/assets                                                                                                                                                                   |
+| Auth                       | Clerk                                                                 | **Clerk** for all operator console routes                                                                                                                                                                                         |
+| AI provider                | Perplexity **Sonar** only for v1; swap later if needed                | **Sonar** Chat Completions for all roles; abstracted `LLMService`; see [Sonar models](https://docs.perplexity.ai/docs/sonar/models)                                                                                               |
+| Adversarial AI             | Stronger Sonar tier + critique prompt vs draft tier (same API family) | **Adversarial pipeline:** Primary draft (`WRITER_MODEL`, e.g. `sonar-pro`) → Critique (`ADVERSARIAL_MODEL`, e.g. `sonar-reasoning-pro`) → Synthesis → Human review queue in Directus                                              |
+| Feeds                      | X + Perplexity                                                        | **X API v2** when available + **Perplexity Sonar** for news aggregation; `FeedService` abstraction                                                                                                                                |
+| Initial focus              | Supreme Court flagship, Palantir thinking                             | **Utah Supreme Court** Judicial Watch page as MVP Palantir demonstration                                                                                                                                                          |
+| Schema                     | Support hierarchies preemptively                                      | `jurisdiction_level` enum + `office_type` enum + `jurisdictions` (parent hierarchy) + `officials` table                                                                                                                           |
+| Tooling                    | `bun` not node; `uv` not pip                                          | `bun` everywhere JS/TS; `uv` everywhere Python; `npx` ONLY for Directus extension scaffold                                                                                                                                        |
+| Hosting                    | Self-hosted for development                                           | Docker Compose: Supabase local + Directus + backend + console                                                                                                                                                                     |
+| Cheaper AI for correlation | Use cheaper **Sonar** tier for bulk edge extraction                   | `CORRELATION_MODEL=sonar`; `WRITER_MODEL=sonar-pro`; `ADVERSARIAL_MODEL=sonar-reasoning-pro`; `RESEARCH_MODEL=sonar-deep-research` for deep research jobs (tune per [Sonar models](https://docs.perplexity.ai/docs/sonar/models)) |
 
 
 ---
@@ -44,7 +44,7 @@
 
 - **Foundation (Phase 0):** COMPLETE — see `plans/04_foundation_supabase_directus.md` for Supabase migrations, Directus Docker, hook extension, API stub. **If you run `supabase db reset`**, follow the **Post-reset checklist** there: restart Directus, re-login (UI password may diverge from `cms/.env`), re-run `register-app-collections.ps1`. **Latest:** `register-app-collections.ps1` completed successfully on operator machine.
 - **Backend Phase 1 (from `plans/00_task_plan.md`):** Steps 0-1 complete (FastAPI skeleton, candidate ETL). Step 2 (entities/claims/vectors) in progress. Running on local FastAPI.
-- **Schema:** `races`, `candidates`, minimal `entities`, `jurisdictions`, `officials`, `entity_edges`, `dossier_claims`, `rag_chunks`, `intelligence_runs` live. Judicial roster extraction upserts UT supreme `officials` (worker). Next: Phase 1.4+ (retention Ballotpedia, opinions, LLM abstraction).
+- **Schema:** `races`, `candidates`, minimal `entities`, `jurisdictions`, `officials`, `entity_edges`, `dossier_claims`, `rag_chunks`, `intelligence_runs` live. Judicial roster extraction upserts UT supreme `officials` (worker). **1.4–1.6** live (retention, opinion→`rag_chunks`+embeddings, `LLMService` / Perplexity). Next: **1.7** adversarial pipeline.
 
 ---
 
@@ -54,14 +54,14 @@
 
 > **See `plans/04_foundation_supabase_directus.md` for full task breakdown.**
 
-- [x] Task 1: `supabase init` + `supabase start`. Keys to `.env.local`.
-- [x] Task 2: Apply existing races/candidates migration to fresh local instance.
-- [x] Task 3: `jurisdiction_officials` migration — enums, `jurisdictions`, `officials`, RLS, seed.
-- [x] Task 4: `directus_role_grants` migration — isolated `directus` schema, minimal Postgres role.
-- [x] Task 5: Directus Docker Compose — connected to Supabase local Postgres.
-- [x] Task 6: Directus collections config for officials/jurisdictions/entities/claims.
-- [x] Task 7: Directus extension — LLM refresh flow trigger on official save.
-- [x] Task 8: Backend stub endpoint for Directus webhook (`POST /v1/intelligence/refresh`).
+- Task 1: `supabase init` + `supabase start`. Keys to `.env.local`.
+- Task 2: Apply existing races/candidates migration to fresh local instance.
+- Task 3: `jurisdiction_officials` migration — enums, `jurisdictions`, `officials`, RLS, seed.
+- Task 4: `directus_role_grants` migration — isolated `directus` schema, minimal Postgres role.
+- Task 5: Directus Docker Compose — connected to Supabase local Postgres.
+- Task 6: Directus collections config for officials/jurisdictions/entities/claims.
+- Task 7: Directus extension — LLM refresh flow trigger on official save.
+- Task 8: Backend stub endpoint for Directus webhook (`POST /v1/intelligence/refresh`).
 - **Status:** complete
 - **Blocks all other phases.**
 
@@ -97,26 +97,30 @@
 - Commit: `git commit -m "feat: judicial extraction worker for utah supreme court justices"`
 - **Done (2026-04-20):** `briefing/worker/__main__.py` + dependencies (`httpx`, `bs4`, `lxml`, `playwright`, `supabase`). Golden check passes; roster currently **5** active justices (all upserted). Re-run `register-app-collections.ps1` so Directus shows new tables.
 
-**1.4 — Ballotpedia retention data extraction**
+**1.4 — Ballotpedia retention data extraction** ✅
 
-- New service: `backend/briefing/services/extraction/retention.py` (~100 LOC)
-- Scrape Ballotpedia retention election history for justices. Persist as `dossier_claims` with `category='Retention Voting'`.
-- Test: Hagen + Pohlman retention history present in claims.
+- New service: `backend/briefing/services/extraction/retention.py`
+- Scrape Ballotpedia **Elections** voteboxes (retention Yes/No tables). Persist as `dossier_claims` with `category='Retention Voting'`, `metadata.source=ballotpedia_retention` (replaces prior Ballotpedia rows per official on each run).
+- Command: `uv run python -m briefing.worker retention-extraction --dry-run` / `--persist` (needs service role). Optional `--slugs diana-hagen,jill-m-pohlman`.
+- **Golden:** Diana Hagen + Jill M. Pohlman must each show a **2020** retention with Yes ~83%. Some justices (e.g. chief) may have **no** votebox on Ballotpedia yet → zero claims until sourced elsewhere.
+- **Done (2026-04-20):** Parser follows `span.mw-headline#Elections` (MediaWiki), maps `officials.slug` → Ballotpedia title (drops single-letter middle initials).
 - Commit: `git commit -m "feat: ballotpedia retention vote history extraction"`
 
-**1.5 — Opinion chunking + embedding**
+**1.5 — Opinion chunking + embedding** ✅
 
-- Service: `backend/briefing/services/extraction/opinions.py` (~150 LOC)
-- Scrape opinion text from utcourts.gov, chunk to ~512-1024 tokens, embed via Perplexity embeddings endpoint, upsert to `rag_chunks`.
-- Test: 3 opinions chunked, embeddings present in `rag_chunks`, pgvector ANN query returns relevant chunk.
+- Service: `backend/briefing/services/extraction/opinions.py` — legacy index `https://legacy.utcourts.gov/opinions/supopin/` (dated `*YYYYMMDD.pdf`, excludes `/summaries/`); **pypdf** text extract; chunk ~3.6k chars with overlap; **Perplexity** `/v1/embeddings` (`pplx-embed-v1-0.6b`, 1024-d) via `PerplexityLLMService`; upsert `rag_chunks` (`source_type=ut_supreme_opinion`, replace-by-`source_url`).
+- DB: `supabase/migrations/20260420140000_rag_chunks_ann_match.sql` — **HNSW** cosine index + `public.match_rag_chunks(query_embedding vector(1024), match_count int)` (execute **`service_role`** only).
+- Command: `uv run python -m briefing.worker opinion-ingestion --dry-run` (no key) / `--persist` (Supabase) / `--no-embed` / `--limit N`.
+- **Golden:** ≥3 dated opinion PDFs listed; ≥3 opinions yield extractable text; **≥3 total chunks** across them (`--dry-run` verifies locally).
+- **Done (2026-04-20):** Wired; full **embed+persist** needs `PERPLEXITY_API_KEY` + `SUPABASE_*` in `.env.local`.
 - Commit: `git commit -m "feat: opinion chunking and embedding into rag_chunks"`
 
-**1.6 — LLM service abstraction**
+**1.6 — LLM service abstraction** ✅
 
-- Create: `backend/briefing/services/llm/base.py` — `LLMService` Protocol (~50 LOC)
-- Create: `backend/briefing/services/llm/perplexity.py` — `PerplexityLLMService` implementing Protocol (~120 LOC)
-- Config: `WRITER_MODEL`, `ADVERSARIAL_MODEL`, `CORRELATION_MODEL` from `pydantic-settings`.
-- Test: Unit test `PerplexityLLMService.retrieve()` with mocked HTTP (respx). Verify JSON schema output.
+- `backend/briefing/services/llm/base.py` — `LLMService` **Protocol**: `embed_texts`, `chat_completion`.
+- `backend/briefing/services/llm/perplexity.py` — `PerplexityLLMService`: decodes **base64 int8** embeddings to float vectors; chat → **`POST /v1/sonar`**.
+- Config: `PERPLEXITY_API_KEY`, `EMBEDDING_MODEL_ID`, `EMBEDDING_DIMENSIONS`, `PPLX_*` models already on `Settings`.
+- Test: `uv run pytest tests/` — **respx** mocks for `/v1/embeddings` + `/v1/sonar`.
 - Commit: `git commit -m "feat: LLMService abstraction with Perplexity implementation"`
 
 **1.7 — Adversarial dossier pipeline**
@@ -320,31 +324,31 @@ Config (role → Sonar model ID; verify IDs in docs):
 ## Decisions Made (Full Registry)
 
 
-| Decision                                                        | Rationale                                                                                                                                                   |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Directus as CMS                                                 | Self-hosted, introspects existing Supabase schema, flows for automation, customizable to design system. Avoids full custom admin.                           |
-| Start console from scratch                                      | OperatorConsole.jsx is design reference only — start clean Next.js with proper architecture                                                                 |
-| Clerk for auth                                                  | Simpler than Supabase Auth for operator console. Well-supported MCP available.                                                                              |
-| Perplexity Sonar as sole LLM provider (v1)                       | One API surface; multiple **Sonar** model IDs for cost/latency tradeoffs ([docs](https://docs.perplexity.ai/docs/sonar/models)). `LLMService` abstraction for future non-Perplexity swaps.                                                                  |
-| Adversarial AI pipeline                                         | Accuracy + credibility for judicial/opposition dossiers. Draft + critique are **different Sonar tiers** and prompts, not different vendors. |
-| X API + Perplexity for feeds                                    | X for direct posts; Perplexity for grounded news aggregation. `FeedService` abstraction handles both.                                                       |
-| `bun` not `node` for all JS/TS                                  | Faster, modern. Exception: `npx create-directus-extension@latest`.                                                                                          |
-| `uv` not `pip` for all Python                                   | Faster, reproducible, declarative. Never manual pyproject.toml edits.                                                                                       |
-| Officials hierarchy: `jurisdiction_level` + `office_type` enums | Preemptive support for all political levels without schema changes later.                                                                                   |
-| Judges: `party = NULL`                                          | Utah judicial elections are non-partisan. `subject_alignment` field routes CMS/research logic.                                                              |
-| Non-election years: show incumbents                             | `is_current = true` on `officials` regardless of party. Election years add candidates via `races`/`candidates`.                                             |
-| Supreme Court first                                             | Most visible, most data-rich (opinions), best Palantir demonstration. Expand outward.                                                                       |
-| Cheap model for correlation                                     | Sonar (small) for bulk entity edge extraction; expensive frontier only for final dossiers.                                                                  |
-| Directus system tables in `directus` schema                     | Prevents Directus from polluting `public`. Schema separation, minimal role grants.                                                                          |
-| Docker Compose for local orchestration                          | Supabase local + Directus + backend + (future) console in single compose network.                                                                           |
+| Decision                                                        | Rationale                                                                                                                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Directus as CMS                                                 | Self-hosted, introspects existing Supabase schema, flows for automation, customizable to design system. Avoids full custom admin.                                                          |
+| Start console from scratch                                      | OperatorConsole.jsx is design reference only — start clean Next.js with proper architecture                                                                                                |
+| Clerk for auth                                                  | Simpler than Supabase Auth for operator console. Well-supported MCP available.                                                                                                             |
+| Perplexity Sonar as sole LLM provider (v1)                      | One API surface; multiple **Sonar** model IDs for cost/latency tradeoffs ([docs](https://docs.perplexity.ai/docs/sonar/models)). `LLMService` abstraction for future non-Perplexity swaps. |
+| Adversarial AI pipeline                                         | Accuracy + credibility for judicial/opposition dossiers. Draft + critique are **different Sonar tiers** and prompts, not different vendors.                                                |
+| X API + Perplexity for feeds                                    | X for direct posts; Perplexity for grounded news aggregation. `FeedService` abstraction handles both.                                                                                      |
+| `bun` not `node` for all JS/TS                                  | Faster, modern. Exception: `npx create-directus-extension@latest`.                                                                                                                         |
+| `uv` not `pip` for all Python                                   | Faster, reproducible, declarative. Never manual pyproject.toml edits.                                                                                                                      |
+| Officials hierarchy: `jurisdiction_level` + `office_type` enums | Preemptive support for all political levels without schema changes later.                                                                                                                  |
+| Judges: `party = NULL`                                          | Utah judicial elections are non-partisan. `subject_alignment` field routes CMS/research logic.                                                                                             |
+| Non-election years: show incumbents                             | `is_current = true` on `officials` regardless of party. Election years add candidates via `races`/`candidates`.                                                                            |
+| Supreme Court first                                             | Most visible, most data-rich (opinions), best Palantir demonstration. Expand outward.                                                                                                      |
+| Cheap model for correlation                                     | Sonar (small) for bulk entity edge extraction; expensive frontier only for final dossiers.                                                                                                 |
+| Directus system tables in `directus` schema                     | Prevents Directus from polluting `public`. Schema separation, minimal role grants.                                                                                                         |
+| Docker Compose for local orchestration                          | Supabase local + Directus + backend + (future) console in single compose network.                                                                                                          |
 
 
 ## Errors Encountered
 
 
-| Error | Attempt | Resolution |
-| ----- | ------- | ---------- |
-| Directus script 401 after local DB reset | 1 | Align admin password with browser session or update `cms/.env`; run `register-app-collections.ps1` with UI credentials (`plans/04` checklist). |
+| Error                                    | Attempt | Resolution                                                                                                                                     |
+| ---------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directus script 401 after local DB reset | 1       | Align admin password with browser session or update `cms/.env`; run `register-app-collections.ps1` with UI credentials (`plans/04` checklist). |
 
 
 ## Notes

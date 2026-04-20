@@ -41,7 +41,19 @@ supabase start
 docker compose up -d directus
 ```
 
-**Full database reset** (applies migrations **and** repairs Directus — prefer this over `supabase db reset` alone):
+**Apply new migrations (default for day-to-day)** — pending SQL only; **does not** wipe Postgres or Directus:
+
+```bash
+# macOS / Linux (after one-time chmod +x from Prerequisites)
+./scripts/dev-db-migrate.sh
+
+# Windows (PowerShell)
+.\scripts\dev-db-migrate.ps1
+```
+
+Optional: `SKIP_DIRECTUS=1 ./scripts/dev-db-migrate.sh` to skip collection metadata PATCHes. If Directus is stopped, start it with `docker compose up -d directus` and run `cms/scripts/register-app-collections.*`.
+
+**Full database reset** (destructive — replays everything; use when you truly need a clean slate or migrations are broken):
 
 ```bash
 # macOS / Linux
@@ -61,6 +73,8 @@ uv sync
 uv run playwright install chromium   # needed for HTML extraction paths
 uv run uvicorn briefing.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+**Workers (CLI):** e.g. `uv run python -m briefing.worker judicial-extraction --persist`, `uv run python -m briefing.worker retention-extraction --dry-run`, `uv run python -m briefing.worker opinion-ingestion --dry-run` (UT Supreme PDFs → chunks; add `PERPLEXITY_API_KEY` and omit `--dry-run` to embed + `--persist` to write `rag_chunks`). Run **`uv run pytest tests/`** for API client unit tests.
 
 Point **`BACKEND_WORKER_URL`** in `cms/.env` at this host (the example uses `http://host.docker.internal:8000`).
 

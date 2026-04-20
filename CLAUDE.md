@@ -6,7 +6,8 @@
 
 When a scripted path exists, **run it** (from the repo root in a terminal) and fix failures — do not ask the user to copy/paste env vars or click through Directus unless a secret is truly missing locally.
 
-- After **`supabase db reset`** (or when repairing local Directus): run **`scripts/dev-db-reset.sh`** (macOS/Linux) or **`scripts/dev-db-reset.ps1`** (Windows), not reset alone.
+- **Default:** apply pending migrations with **`scripts/dev-db-migrate.sh`** (macOS/Linux) or **`scripts/dev-db-migrate.ps1`** (Windows) — **non-destructive**; Directus users and metadata stay.
+- **Rare full wipe:** after **`supabase db reset`** (or broken local state): run **`scripts/dev-db-reset.sh`** / **`dev-db-reset.ps1`**, not `db reset` alone (Directus repair included).
 - Directus repair + collection registration reads **`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `cms/.env`** automatically (or `DIRECTUS_EMAIL` / `DIRECTUS_PASSWORD` if set).
 - On macOS/Linux, ensure shell scripts are executable once: `chmod +x scripts/*.sh cms/scripts/*.sh`.
 
@@ -129,7 +130,7 @@ node ...         # Wrong (use bun)
 **Never use bare Postgres.** Always the Supabase stack.
 
 **Local dev:** `supabase init` → `supabase start` (Docker). DB at `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
-**Migrations:** `supabase migration new <name>` → edit SQL → `supabase db push` or `supabase db reset`.
+**Migrations:** `supabase migration new <name>` → edit SQL → **local:** `supabase migration up` (or **`scripts/dev-db-migrate.*`**) for day-to-day; **`supabase db reset`** only when you need a full replay; **hosted:** `supabase db push`.
 **Never:** manually edit `schema.sql` outside migrations. Never run raw ALTER/CREATE in prod without a migration file.
 **RLS:** Enable on every user-reachable table. Workers use `service_role` (bypasses RLS — enforce in code for sensitive paths). Never ship `service_role` key to clients.
 **pgvector:** Enabled via migration. Embeddings stored in `rag_chunks.embedding`. Similarity search via `match_*` RPCs.
@@ -171,7 +172,7 @@ npx create-directus-extension@latest
 - **Directus configuration is `cms/.env` only** (loaded by `docker-compose.yml`). Required in Directus 10+: **`KEY`** (encryption for stored secrets) and **`SECRET`** (JWT/session signing). Keep both **stable** per machine/environment; changing **`KEY`** against an existing Directus system tables can yield **`INTERNAL_SERVER_ERROR`**. After `supabase db reset`, a **fresh** DB with an unchanged `KEY`/`SECRET` is fine.
 - **Do not put Directus `KEY` in repo-root `.env.local`** — that file is for Supabase keys, backend, and convenience vars (`DIRECTUS_URL`, etc.). The container never reads `.env.local`.
 - **`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `cms/.env`** are used at first bootstrap and by **`cms/scripts/register-app-collections.*`** when `DIRECTUS_*` login env vars are unset.
-- **Never run `supabase db reset` in isolation** if Directus shares the DB. Use:
+- **Never run `supabase db reset` in isolation** if Directus shares the DB (it wipes Directus system tables). Prefer **`scripts/dev-db-migrate.*`** for normal schema changes. For a deliberate full wipe + repair:
   - **macOS/Linux:** `bash scripts/dev-db-reset.sh` (set `SKIP_DIRECTUS=1` to skip Directus repair).
   - **Windows:** `.\scripts\dev-db-reset.ps1`
 - Under the hood, repair runs **`cms/scripts/sync-directus-after-supabase-reset.(sh|ps1)`**: restart Directus, wait on `/server/health`, `npx directus bootstrap`, `schema apply` on `cms/schema/snapshot-baseline.yaml` (non-fatal if metadata already exists), then register app collections. Details and pitfalls: `plans/04_foundation_supabase_directus.md`.
@@ -314,6 +315,8 @@ CLERK_SECRET_KEY=sk_...
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 
 PERPLEXITY_API_KEY=pplx-...
+# Embeddings for rag_chunks (1024-d — must match DB column); see Perplexity Embeddings docs
+EMBEDDING_MODEL_ID=pplx-embed-v1-0.6b
 # Perplexity Sonar only — IDs from https://docs.perplexity.ai/docs/sonar/models
 WRITER_MODEL=sonar-pro                       # primary dossier writer (Sonar Chat Completions)
 ADVERSARIAL_MODEL=sonar-reasoning-pro        # adversarial / critique pass (stronger Sonar tier)
