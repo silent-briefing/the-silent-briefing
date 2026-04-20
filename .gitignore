@@ -1,5 +1,6 @@
-# Environment and secrets
+# Environment and secrets (never commit real keys)
 .env
+.env.local
 .env.*
 !.env.example
 cms/.env

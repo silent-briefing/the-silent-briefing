@@ -1,7 +1,127 @@
 version: 1
 directus: 11.17.3
 vendor: postgres
-collections: []
+collections:
+  - collection: candidates
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: candidates
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: person
+      item_duplication_fields: null
+      note: Supabase public.candidates
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: candidates
+  - collection: entities
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: entities
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: hub
+      item_duplication_fields: null
+      note: Supabase public.entities
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: entities
+  - collection: jurisdictions
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: jurisdictions
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: account_tree
+      item_duplication_fields: null
+      note: Supabase public.jurisdictions
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: jurisdictions
+  - collection: officials
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: officials
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: badge
+      item_duplication_fields: null
+      note: Supabase public.officials
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: officials
+  - collection: races
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: races
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: how_to_vote
+      item_duplication_fields: null
+      note: Supabase public.races
+      preview_url: null
+      singleton: false
+      sort: null
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: races
 fields: []
 systemFields:
   - collection: directus_activity

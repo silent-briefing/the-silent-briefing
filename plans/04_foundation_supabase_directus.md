@@ -4,7 +4,7 @@
 >
 > **Goal:** Stand up the foundational infrastructure — Supabase (local dev) with extended official hierarchy schema + Directus CMS (self-hosted, Docker) connected to the same Postgres, with minimal grants and schema isolation. All scaffolded, nothing handwritten. Ready for backend services and Directus collections configuration.
 >
-> **Architecture:** Supabase CLI manages local Docker stack (API, DB, Studio). Directus runs in the same Docker network, connecting to Supabase's Postgres directly (`DB_HOST=db`, same compose network). Directus system tables isolated in `directus` schema. Our app tables in `public` schema with RLS. Directus granted a dedicated Postgres role with minimal access.
+> **Architecture:** Supabase CLI manages local Docker stack (API, DB, Studio). Directus (Docker) connects to the **same Postgres** as Supabase (`host.docker.internal:54322` from the container). App tables stay in `public` with RLS; Directus stores its own metadata in that database too (locally often alongside app tables — acceptable unless something breaks). A narrowed `directus_user` role remains in migrations for stricter deploys later.
 >
 > **Tech Stack:** Supabase CLI, Docker Compose, Directus (bunx scaffold or Docker), `uv` for Python tooling, `bun` for JS. Migrations via Supabase CLI. No manual SQL editing outside migrations.
 >
@@ -15,7 +15,7 @@
 ## Current Status
 
 - Supabase: local migrations applied (`races`/`candidates`/`entities`, `jurisdictions`/`officials`, `directus_user` + search_path); keys in `.env.local`
-- Directus: Docker Compose on port 8055; baseline snapshot in `cms/schema/snapshot-baseline.yaml`. **Gap:** Directus 11.17 bootstrap placed system tables in `public` (verify: `SELECT schemaname FROM pg_tables WHERE tablename = 'directus_collections'`). `DB_SCHEMA=directus` did not isolate them — follow-up before prod (clean install experiment or upstream issue).
+- Directus: Docker Compose on port **8055**; collection metadata snapshot `cms/schema/snapshot-baseline.yaml`; script `cms/scripts/register-app-collections.ps1` activates app tables in the Studio sidebar.
 - Backend: `backend/` FastAPI stub with `POST /v1/intelligence/refresh` for CMS hook
 
 ---
@@ -362,7 +362,7 @@ git commit -m "feat: create directus_user role and schema isolation"
 
 ## Task 5: Directus Docker Compose Setup
 
-**Objective:** Add Directus to `docker-compose.yml` alongside Supabase local stack. Directus connects to the same Postgres DB on the `directus` schema. Self-hosted, no cloud dependency.
+**Objective:** Add Directus to `docker-compose.yml` alongside Supabase local stack. Directus connects to the **same Postgres** as Supabase. Self-hosted, no cloud dependency.
 
 **Files:**
 
@@ -451,10 +451,20 @@ DIRECTUS_URL=http://localhost:8055
 docker compose up directus -d
 ```
 
-Expected: Directus starts, visits `http://localhost:8055`. Login with admin email/password from `.env.local`.
+Expected: Directus starts at `http://127.0.0.1:8055`. **Log in with the email and password you used in the Directus registration / first-run screen** — not necessarily `ADMIN_*` in `cms/.env` (those only seed the first admin when the database has no Directus install yet).
 
-**Step 5: Verify Directus sees our schema**
-In Directus admin: Settings → Data Model. Should see `jurisdictions`, `officials`, `races`, `candidates`, `entities` collections (from our `public` schema).
+**Step 5: Verify linkage to Supabase**
+- **Same DB:** In Supabase Studio → **Table Editor**, pick `public.jurisdictions` (or any app table). In Directus → **Content** → `jurisdictions`, you are viewing the same rows.
+- **If Content is empty in the sidebar:** run `cms/scripts/register-app-collections.ps1` after setting `DIRECTUS_ADMIN_TOKEN` (user menu → your account → **Token**). Or open **Settings → Data Model** and confirm the five app collections are visible.
+
+### Directus quick reference (why login / sidebar looked “wrong”)
+
+| Topic | What to know |
+| ----- | ------------ |
+| Login | Browser registration creates your admin user. `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `cms/.env` do **not** update that password later. `.env.local` is for other apps (e.g. FastAPI), not Directus session auth. |
+| “No dashboard” | Directus 11 is the **Data Studio**. Use **Content** (data), **Settings → Data Model** (schema/UI), **Settings → Project Settings** (project). There is no separate marketing dashboard. |
+| Supabase link | `cms/.env` `DB_*` must match `supabase status` DB URL (`postgres` on port `54322`). If Directus boots and shows the login screen, it already reached Postgres. |
+| App tables invisible | Tables existed in Postgres but had no `directus_collections` metadata. Run the registration script above or `PATCH` collections via API; committed snapshot `cms/schema/snapshot-baseline.yaml` documents the intended collection meta. |
 
 **Step 6: Commit**
 
@@ -682,7 +692,7 @@ git commit -m "feat: add intelligence refresh stub route for directus webhook"
 After completing Tasks 1-8:
 
 - Supabase local stack running with full schema (races, candidates, entities, jurisdictions, officials, directus grants).
-- Directus running via Docker, connected to same Postgres (system tables currently in `public` — see Errors; target is `directus` schema).
+- Directus running via Docker on the same Postgres as Supabase (see Task 5 quick reference for login + Content sidebar).
 - Officials hierarchy (jurisdiction_level, office_type enums, jurisdictions seed) ready for data.
 - Directus collections configured, schema snapshots committed.
 - LLM refresh flow wired: Directus save → backend `/v1/intelligence/refresh` → (stub for now, real ARQ job in Phase 2).
@@ -699,6 +709,7 @@ After completing Tasks 1-8:
 | `supabase db reset` exits 502 restarting containers                                                                               | 1       | Harmless locally; migrations + seed apply; run `supabase status` to confirm stack.                                                                                                                                                  |
 | Original `20260319180000_races_candidates.sql` missing from repo                                                                  | 1       | Recreated migration from `plans/00_task_plan.md` + added minimal `entities` so Task 3 `officials.entity_id` FK applies.                                                                                                             |
 | `supabase db diff` noisy after Directus bootstrap                                                                                  | 1       | Directus creates `directus_*` tables and Supabase grants outside migration files; diff reflects that. Use diff for migration-only schema, or exclude Directus-managed objects.                                                      |
-| `DB_SCHEMA=directus` but system tables landed in `public` (Directus 11.17)                                                         | 1       | Documented in Current Status; needs follow-up (clean install experiment, env precedence, or upstream issue).                                                                                                                        |
+| Login with `ADMIN_PASSWORD` from `.env` fails after browser registration                                                           | 1       | Expected: admin password is whatever you set in the Directus UI. Env `ADMIN_*` only applies to first automated bootstrap on an empty Directus DB.                                                                                  |
+| App tables missing from Directus **Content**                                                                                       | 1       | Postgres tables need `directus_collections` / metadata. Run `cms/scripts/register-app-collections.ps1` with a static admin token, or apply `cms/schema/snapshot-baseline.yaml` on a fresh instance.                                |
 
 

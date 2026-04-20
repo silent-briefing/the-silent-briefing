@@ -46,8 +46,8 @@ Election years: include challengers/candidates via `races` + `candidates` (exist
 ## Directus
 
 - Connects to the SAME Supabase Postgres. No separate DB.
-- Directus system tables in `directus` schema (`DB_SCHEMA=directus`). Never `public`.
-- Schema owned by Supabase migrations. Directus reads/introspects, does not define schema.
+- Local dev: Directus metadata often lives in `public` alongside app tables; that is fine unless it causes real problems. Prefer not forcing `DB_SCHEMA` unless you have verified bootstrap.
+- Schema owned by Supabase migrations for app tables. Directus reads/introspects; use `cms/scripts/register-app-collections.ps1` (or schema snapshot) so app tables appear under **Content**.
 - Scaffold: `bunx create-directus-project@latest cms` OR Docker compose (preferred for self-hosted).
 - Extensions: `npx create-directus-extension@latest` (only allowed `npx`).
 - Extensions live in `cms/extensions/`. One concern per extension, ~200 LOC.
