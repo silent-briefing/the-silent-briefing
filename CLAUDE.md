@@ -37,6 +37,7 @@ All planning files live in `plans/` with numeric prefixes:
 | `plans/02_findings.md` | Research: CMS options, judicial sources, AI orchestration, design |
 | `plans/03_progress.md` | Session log, test results, decisions |
 | `plans/04_foundation_supabase_directus.md` | Foundation: Supabase CLI setup + Directus scaffold |
+| `docs/plans/2026-04-21-step-3-phase-3-cohesive-implementation.md` | **Step 3 + Phase 3** cohesive plan (staged retrieval, writer, RLS, Next console) |
 
 **Rules for planning files:**
 - Re-read relevant plans before major decisions (keeps goals in attention window).
@@ -71,6 +72,10 @@ uv add fastapi supabase perplexipy
 # Run anything
 uv run pytest
 uv run python -m briefing.worker baseline-extraction
+
+# Step 3 intelligence (after `retrieval-pass`, optional `dossier-write`)
+# uv run python -m briefing.worker retrieval-pass --official-id <UUID> [--stages A,B,C] [--persist] [--correlate]
+# uv run python -m briefing.worker dossier-write --official-id <UUID> [--rag-query "..."] [--persist]
 
 # Sync deps
 uv sync
@@ -165,7 +170,7 @@ npx create-directus-extension@latest
 - Custom interfaces/panels must use `@design/` CSS variables (navy/cream/gold, Newsreader+Inter, no borders, Lucide icons).
 - Flows (Directus automations) trigger backend worker jobs (LLM refresh, correlation engine) via webhooks on item save/update.
 - RBAC in Directus mirrors Supabase RLS roles: admins see all, operators see published content, viewers read-only.
-- Extensions in `cms/extensions/`. Each extension one responsibility, ~200 LOC.
+- Extensions in `cms/extensions/` as **one folder per extension** at the root of that directory, each with its own `package.json`. Directus only scans immediate children of `EXTENSIONS_PATH` (nested `hooks/foo` folders are ignored). Each extension one responsibility, ~200 LOC.
 
 **Local env & repair (same Postgres as Supabase):**
 
@@ -322,6 +327,17 @@ WRITER_MODEL=sonar-pro                       # primary dossier writer (Sonar Cha
 ADVERSARIAL_MODEL=sonar-reasoning-pro        # adversarial / critique pass (stronger Sonar tier)
 CORRELATION_MODEL=sonar                      # cheap tier for bulk correlation / edge proposals
 RESEARCH_MODEL=sonar-deep-research           # deep research / heavy evidence passes (not default hot path)
+
+# Optional — scraper / source page URLs when third parties move paths (defaults in backend/briefing/defaults/source_urls.py)
+# VOTE_UTAH_FILINGS_URL=https://vote.utah.gov/2026-candidate-filings/
+# SLCO_CANDIDATE_LIST_URL=https://www.saltlakecounty.gov/clerk/elections/current-candidate-list/
+# UTCOURTS_SUPREME_ROSTER_URL=https://www.utcourts.gov/en/about/courts/judges-bios/appellate-courts/supreme-court.html
+# UTCOURTS_SITE_ORIGIN=https://www.utcourts.gov
+# UT_LEGACY_OPINION_INDEX_URL=https://legacy.utcourts.gov/opinions/supopin/
+# BALLOTPEDIA_BASE_URL=https://ballotpedia.org
+# GOOGLE_CIVIC_ELECTIONS_URL=https://www.googleapis.com/civicinfo/v2/elections
+# GOOGLE_CIVIC_DIVISIONS_BY_ADDRESS_URL=https://www.googleapis.com/civicinfo/v2/divisionsByAddress
+# GOOGLE_CIVIC_VOTERINFO_URL=https://www.googleapis.com/civicinfo/v2/voterinfo
 
 X_API_BEARER_TOKEN=...                       # X API v2 (when available)
 ```

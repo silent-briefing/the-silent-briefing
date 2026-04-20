@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import re
+import sys
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Any
@@ -17,7 +19,6 @@ from briefing.config import Settings, get_settings
 from briefing.services.extraction.judicial import fetch_sup_html
 from briefing.services.llm.perplexity import PerplexityLLMService
 
-UT_SUPREME_OPINION_INDEX = "https://legacy.utcourts.gov/opinions/supopin/"
 SOURCE_TYPE = "ut_supreme_opinion"
 _CHUNK_TARGET_CHARS = 3600
 _CHUNK_OVERLAP = 400
@@ -37,7 +38,7 @@ def list_ut_supreme_opinion_pdfs(
     *,
     limit: int,
     user_agent: str,
-    index_url: str = UT_SUPREME_OPINION_INDEX,
+    index_url: str,
 ) -> list[OpinionRef]:
     html = fetch_sup_html(index_url, user_agent)
     soup = BeautifulSoup(html, "lxml")
@@ -154,6 +155,8 @@ def persist_opinion_chunks(
             "chunk_index": idx,
             "content_hash": _content_hash(content),
             "embedding_model_id": embedding_model_id,
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "chunk_version": 1,
             "metadata": {
                 "case_name": ref.case_name,
                 "filed_yyyymmdd": ref.filed_yyyymmdd,
@@ -173,20 +176,40 @@ def run_opinion_ingestion(
     persist: bool = False,
     dry_run: bool = False,
     embed: bool = True,
+    correlate_after_persist: bool = True,
     settings: Settings | None = None,
-) -> tuple[list[OpinionRef], int, int]:
-    """Return (refs, total_chunks, rows_persisted)."""
+) -> tuple[list[OpinionRef], int, int, int]:
+    """Return (refs, total_chunks, rows_persisted, correlation_edges_inserted)."""
     cfg = settings or get_settings()
-    refs = list_ut_supreme_opinion_pdfs(limit=limit, user_agent=cfg.http_user_agent)
+    refs = list_ut_supreme_opinion_pdfs(
+        limit=limit,
+        user_agent=cfg.http_user_agent,
+        index_url=cfg.ut_legacy_opinion_index_url,
+    )
     validate_golden_opinion_index(refs)
 
-    llm: PerplexityLLMService | None = None
+    llm_embed: PerplexityLLMService | None = None
     if embed and not dry_run:
-        llm = PerplexityLLMService(cfg)
+        llm_embed = PerplexityLLMService(cfg)
+
+    correlation_llm: PerplexityLLMService | None = None
+    if persist and correlate_after_persist and not dry_run:
+        if llm_embed is not None:
+            correlation_llm = llm_embed
+        else:
+            try:
+                correlation_llm = PerplexityLLMService(cfg)
+            except ValueError:
+                print(
+                    "opinion-ingestion: PERPLEXITY_API_KEY missing; "
+                    "skipping post-persist correlation",
+                    file=sys.stderr,
+                )
 
     total_chunks = 0
     opinions_with_chunks = 0
     persisted = 0
+    correlation_edges_inserted = 0
     for ref in refs:
         try:
             data = download_pdf_bytes(ref.pdf_url, cfg.http_user_agent)
@@ -203,8 +226,8 @@ def run_opinion_ingestion(
         if dry_run:
             continue
         vectors: list[list[float]] | None = None
-        if embed and llm is not None:
-            vectors = llm.embed_texts(chunks)
+        if embed and llm_embed is not None:
+            vectors = llm_embed.embed_texts(chunks)
         if persist:
             persisted += persist_opinion_chunks(
                 ref,
@@ -213,6 +236,30 @@ def run_opinion_ingestion(
                 cfg.embedding_model_id if embed else None,
                 cfg,
             )
+            if correlation_llm is not None:
+                from briefing.services.llm.correlation import run_correlation_pass
+
+                text_blob = "\n\n".join(chunks)
+                ctx = (
+                    f"ut_supreme_opinion filed={ref.filed_yyyymmdd or '?'} "
+                    f"case={ref.case_name}"
+                )
+                try:
+                    cr = run_correlation_pass(
+                        correlation_llm,
+                        text=text_blob,
+                        context=ctx,
+                        persist=True,
+                        dry_run=False,
+                        min_confidence=0.8,
+                        settings=cfg,
+                    )
+                    correlation_edges_inserted += cr.inserted
+                except Exception as e:
+                    print(
+                        f"opinion-ingestion: correlation failed for {ref.case_name!r}: {e}",
+                        file=sys.stderr,
+                    )
 
     if opinions_with_chunks < 3:
         msg = (
@@ -221,4 +268,4 @@ def run_opinion_ingestion(
         )
         raise RuntimeError(msg)
     validate_golden_opinion_chunks(total_chunks)
-    return refs, total_chunks, persisted
+    return refs, total_chunks, persisted, correlation_edges_inserted

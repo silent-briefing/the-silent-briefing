@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from datetime import datetime, timezone
@@ -65,10 +66,55 @@ def parse_voter_info_response(payload: dict[str, Any]) -> list[NormalizedCandida
     return out
 
 
+def fetch_google_civic_elections(settings: Settings) -> dict[str, Any]:
+    """`electionsQuery` — list available elections (no address required)."""
+    if not settings.google_civic_api_key:
+        return {}
+    params = {"key": settings.google_civic_api_key}
+    headers = {"User-Agent": settings.http_user_agent}
+    with httpx.Client(timeout=60.0, headers=headers) as client:
+        resp = client.get(settings.google_civic_elections_url, params=params)
+        resp.raise_for_status()
+        payload = resp.json()
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    maybe_write_artifact(
+        settings.extraction_artifacts_dir or None,
+        f"google_civic_elections_{ts}.json",
+        json.dumps(payload, indent=2),
+    )
+    return payload if isinstance(payload, dict) else {}
+
+
+def fetch_google_civic_divisions_by_address(
+    settings: Settings,
+    address: str | None = None,
+) -> dict[str, Any]:
+    """`divisionsByAddress` — OCD division IDs for a normalized address."""
+    if not settings.google_civic_api_key:
+        return {}
+    addr = (address or settings.google_civic_voter_address or "").strip()
+    if not addr:
+        return {}
+    params: dict[str, str] = {"address": addr, "key": settings.google_civic_api_key}
+    headers = {"User-Agent": settings.http_user_agent}
+    with httpx.Client(timeout=60.0, headers=headers) as client:
+        resp = client.get(settings.google_civic_divisions_by_address_url, params=params)
+        resp.raise_for_status()
+        payload = resp.json()
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    safe = hashlib.sha256(addr.encode("utf-8")).hexdigest()[:12]
+    maybe_write_artifact(
+        settings.extraction_artifacts_dir or None,
+        f"google_civic_divisions_{safe}_{ts}.json",
+        json.dumps(payload, indent=2),
+    )
+    return payload if isinstance(payload, dict) else {}
+
+
 def fetch_google_civic_candidates(settings: Settings) -> list[NormalizedCandidate]:
     if not settings.google_civic_api_key or not settings.google_civic_voter_address:
         return []
-    url = "https://www.googleapis.com/civicinfo/v2/voterinfo"
+    url = settings.google_civic_voterinfo_url
     params: dict[str, str] = {
         "address": settings.google_civic_voter_address,
         "key": settings.google_civic_api_key,

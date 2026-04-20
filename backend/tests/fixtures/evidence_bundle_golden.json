@@ -1,0 +1,12 @@
+{
+  "retrieval_stage": "A",
+  "executive_summary": "Justice Example was appointed to the Utah Supreme Court in 2020.",
+  "evidence_items": [
+    {
+      "claim": "Governor appointed Justice Example effective January 2020 per court news release.",
+      "source_url": "https://example.org/utcourts/news",
+      "notes": "Primary court source"
+    }
+  ],
+  "entity_mentions": ["Utah Supreme Court", "Justice Example"]
+}

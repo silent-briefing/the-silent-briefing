@@ -1,6 +1,9 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from briefing.defaults import source_urls as _urls
 
 
 class Settings(BaseSettings):
@@ -24,16 +27,26 @@ class Settings(BaseSettings):
     writer_model: str = "sonar-pro"
     adversarial_model: str = "sonar-reasoning-pro"
     correlation_model: str = "sonar"
+    # Stage 1 A/B/C retrieval passes (Step 3); default to cheap Sonar unless overridden.
+    retrieval_model: str = "sonar"
     # Dedicated research / evidence-gathering runs (higher latency & cost than hot path).
     research_model: str = "sonar-deep-research"
     http_user_agent: str = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 SilentBriefing/1.0"
     )
-    vote_utah_filings_url: str = "https://vote.utah.gov/2026-candidate-filings/"
-    slco_candidate_list_url: str = (
-        "https://www.saltlakecounty.gov/clerk/elections/current-candidate-list/"
+    # External source URLs — override via env when sites move (see defaults/source_urls.py).
+    vote_utah_filings_url: str = Field(default=_urls.VOTE_UTAH_FILINGS_PAGE)
+    slco_candidate_list_url: str = Field(default=_urls.SLCO_CANDIDATE_LIST_PAGE)
+    utcourts_supreme_roster_url: str = Field(default=_urls.UTCOURTS_SUPREME_ROSTER_HTML)
+    utcourts_site_origin: str = Field(default=_urls.UTCOURTS_SITE_ORIGIN)
+    ut_legacy_opinion_index_url: str = Field(default=_urls.UT_LEGACY_SUPREME_OPINION_INDEX)
+    ballotpedia_base_url: str = Field(default=_urls.BALLOTPEDIA_ORIGIN)
+    google_civic_elections_url: str = Field(default=_urls.GOOGLE_CIVIC_ELECTIONS)
+    google_civic_divisions_by_address_url: str = Field(
+        default=_urls.GOOGLE_CIVIC_DIVISIONS_BY_ADDRESS
     )
+    google_civic_voterinfo_url: str = Field(default=_urls.GOOGLE_CIVIC_VOTERINFO)
     slco_playwright_enabled: bool = False
     extraction_artifacts_dir: str = ""
     extraction_artifacts_retention_days: int = 14

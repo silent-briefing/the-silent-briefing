@@ -13,11 +13,6 @@ from playwright.sync_api import sync_playwright
 
 from briefing.config import Settings, get_settings
 
-# Roster with stable links to each justice biography (not the shallow /courts/sup/ hub).
-UT_SUPREME_ROSTER_URL = (
-    "https://www.utcourts.gov/en/about/courts/judges-bios/appellate-courts/supreme-court.html"
-)
-
 
 @dataclass(frozen=True)
 class JusticeRow:
@@ -65,10 +60,10 @@ def _title_case_name(raw_label: str) -> str:
     return t.title()
 
 
-def parse_ut_supreme_roster(html: str) -> list[JusticeRow]:
+def parse_ut_supreme_roster(html: str, *, site_origin: str) -> list[JusticeRow]:
     """Parse the supreme-court.html roster: one row per biography link."""
     soup = BeautifulSoup(html, "lxml")
-    base = "https://www.utcourts.gov"
+    base = site_origin.rstrip("/")
     by_href: dict[str, JusticeRow] = {}
 
     for a in soup.find_all("a", href=True):
@@ -203,8 +198,8 @@ def run_ut_supreme_extraction(
     settings: Settings | None = None,
 ) -> list[JusticeRow]:
     cfg = settings or get_settings()
-    html = fetch_sup_html(UT_SUPREME_ROSTER_URL, cfg.http_user_agent)
-    rows = parse_ut_supreme_roster(html)
+    html = fetch_sup_html(cfg.utcourts_supreme_roster_url, cfg.http_user_agent)
+    rows = parse_ut_supreme_roster(html, site_origin=cfg.utcourts_site_origin)
     if not rows:
         msg = (
             "No justices parsed from Utah Supreme Court roster — HTML layout may have changed."

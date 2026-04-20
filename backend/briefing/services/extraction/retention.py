@@ -12,7 +12,6 @@ from bs4 import BeautifulSoup, Tag
 
 from briefing.config import Settings, get_settings
 
-BALLOTPEDIA_BASE = "https://ballotpedia.org"
 RETENTION_CATEGORY = "Retention Voting"
 METADATA_SOURCE = "ballotpedia_retention"
 
@@ -45,8 +44,8 @@ def ballotpedia_title_from_official_slug(slug: str) -> str:
     return "_".join(p.title() for p in parts)
 
 
-def fetch_ballotpedia_html(title: str, user_agent: str) -> str:
-    url = f"{BALLOTPEDIA_BASE}/{title}"
+def fetch_ballotpedia_html(title: str, user_agent: str, ballotpedia_base: str) -> str:
+    url = f"{ballotpedia_base.rstrip('/')}/{title}"
     headers = {
         "User-Agent": user_agent,
         "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
@@ -90,7 +89,13 @@ def _parse_votes_from_row(row: Tag) -> tuple[float | None, int | None]:
     return pct, votes
 
 
-def _parse_retention_votebox(votebox: Tag, election_year: int, page_url: str) -> RetentionEvent | None:
+def _parse_retention_votebox(
+    votebox: Tag,
+    election_year: int,
+    page_url: str,
+    *,
+    ballotpedia_base: str,
+) -> RetentionEvent | None:
     header = votebox.select_one(".race_header h5")
     office = header.get_text(" ", strip=True) if header else "Unknown court"
 
@@ -135,7 +140,7 @@ def _parse_retention_votebox(votebox: Tag, election_year: int, page_url: str) ->
     canvass = votebox.select_one("a[href*='voteinfo.utah.gov'], a[href*='.pdf']")
     source_url = canvass.get("href") if canvass else page_url
     if source_url and not source_url.startswith("http"):
-        source_url = urljoin(BALLOTPEDIA_BASE, source_url)
+        source_url = urljoin(f"{ballotpedia_base.rstrip('/')}/", source_url)
 
     return RetentionEvent(
         election_year=election_year,
@@ -161,7 +166,12 @@ def _elections_section_h2(soup: BeautifulSoup) -> Tag | None:
     return h2 if isinstance(h2, Tag) else None
 
 
-def parse_retention_from_ballotpedia_html(html: str, page_url: str) -> list[RetentionEvent]:
+def parse_retention_from_ballotpedia_html(
+    html: str,
+    page_url: str,
+    *,
+    ballotpedia_base: str,
+) -> list[RetentionEvent]:
     soup = BeautifulSoup(html, "lxml")
     elections = _elections_section_h2(soup)
     if elections is None:
@@ -185,7 +195,9 @@ def parse_retention_from_ballotpedia_html(html: str, page_url: str) -> list[Rete
         if sib.name == "div" and "votebox" in (sib.get("class") or []):
             if current_year is None:
                 continue
-            ev = _parse_retention_votebox(sib, current_year, page_url)
+            ev = _parse_retention_votebox(
+                sib, current_year, page_url, ballotpedia_base=ballotpedia_base
+            )
             if ev:
                 events.append(ev)
     return events
@@ -306,12 +318,15 @@ def run_retention_extraction(
     if slugs:
         target_slugs = target_slugs & set(slugs)
 
+    bp = cfg.ballotpedia_base_url
     out: dict[str, list[RetentionEvent]] = {}
     for slug in sorted(target_slugs):
         title = BALLOTPEDIA_PAGE_OVERRIDES.get(slug) or ballotpedia_title_from_official_slug(slug)
-        html = fetch_ballotpedia_html(title, cfg.http_user_agent)
-        page_url = f"{BALLOTPEDIA_BASE}/{title}"
-        events = parse_retention_from_ballotpedia_html(html, page_url)
+        html = fetch_ballotpedia_html(title, cfg.http_user_agent, bp)
+        page_url = f"{bp.rstrip('/')}/{title}"
+        events = parse_retention_from_ballotpedia_html(
+            html, page_url, ballotpedia_base=bp
+        )
         out[slug] = events
 
     validate_golden_retention_hagen_pohlman(out)

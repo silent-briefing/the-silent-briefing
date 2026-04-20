@@ -48,7 +48,11 @@ def parse_vote_utah_filings_html(html: str) -> list[NormalizedCandidate]:
 
 
 def fetch_vote_utah_candidates(settings: Settings) -> list[NormalizedCandidate]:
-    html = resilient_get_text(settings.vote_utah_filings_url, user_agent=settings.http_user_agent)
+    html = resilient_get_text(
+        settings.vote_utah_filings_url,
+        user_agent=settings.http_user_agent,
+        artifacts_dir=settings.extraction_artifacts_dir or None,
+    )
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     maybe_write_artifact(
         settings.extraction_artifacts_dir or None,

@@ -52,7 +52,8 @@ Election years: include challengers/candidates via `races` + `candidates` (exist
 - Schema owned by Supabase migrations for app tables. Directus reads/introspects; use `cms/scripts/register-app-collections.ps1` (or schema snapshot) so app tables appear under **Content**.
 - Scaffold: `bunx create-directus-project@latest cms` OR Docker compose (preferred for self-hosted).
 - Extensions: `npx create-directus-extension@latest` (only allowed `npx`).
-- Extensions live in `cms/extensions/`. One concern per extension, ~200 LOC.
+- Extensions live in `cms/extensions/` as **flat** directories (`cms/extensions/<name>/package.json`). Directus does not load `cms/extensions/hooks/<name>` style nesting; each extension must be a direct child of the extensions root.
+- One concern per extension, ~200 LOC.
 - Custom interfaces/panels must use design system CSS vars + Lucide icons.
 - Flows: use for "on item save → trigger LLM correlation/refresh" (POST to backend worker API).
 
