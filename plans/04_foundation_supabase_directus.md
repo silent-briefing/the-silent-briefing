@@ -455,7 +455,7 @@ Expected: Directus starts at `http://127.0.0.1:8055`. **Log in with the email an
 
 **Step 5: Verify linkage to Supabase**
 - **Same DB:** In Supabase Studio → **Table Editor**, pick `public.jurisdictions` (or any app table). In Directus → **Content** → `jurisdictions`, you are viewing the same rows.
-- **If Content is empty in the sidebar:** run `cms/scripts/register-app-collections.ps1` after setting `DIRECTUS_ADMIN_TOKEN` (user menu → your account → **Token**). Or open **Settings → Data Model** and confirm the five app collections are visible.
+- **If Content is empty in the sidebar:** run `cms/scripts/register-app-collections.ps1 -Email you@example.com -Password '…'` (same credentials as the Directus web login — most reliable). Static tokens can 401 if the wrong value was copied; optional: `-Token` / `DIRECTUS_ADMIN_TOKEN`. Or open **Settings → Data Model** and confirm the five app collections are visible.
 
 ### Directus quick reference (why login / sidebar looked “wrong”)
 
@@ -710,6 +710,7 @@ After completing Tasks 1-8:
 | Original `20260319180000_races_candidates.sql` missing from repo                                                                  | 1       | Recreated migration from `plans/00_task_plan.md` + added minimal `entities` so Task 3 `officials.entity_id` FK applies.                                                                                                             |
 | `supabase db diff` noisy after Directus bootstrap                                                                                  | 1       | Directus creates `directus_*` tables and Supabase grants outside migration files; diff reflects that. Use diff for migration-only schema, or exclude Directus-managed objects.                                                      |
 | Login with `ADMIN_PASSWORD` from `.env` fails after browser registration                                                           | 1       | Expected: admin password is whatever you set in the Directus UI. Env `ADMIN_*` only applies to first automated bootstrap on an empty Directus DB.                                                                                  |
-| App tables missing from Directus **Content**                                                                                       | 1       | Postgres tables need `directus_collections` / metadata. Run `cms/scripts/register-app-collections.ps1` with a static admin token, or apply `cms/schema/snapshot-baseline.yaml` on a fresh instance.                                |
+| App tables missing from Directus **Content**                                                                                       | 1       | Postgres tables need `directus_collections` / metadata. Run `cms/scripts/register-app-collections.ps1 -Email … -Password …` (JWT via `/auth/login`), or `-Token` with a **full** user static token. Or apply `cms/schema/snapshot-baseline.yaml` on a fresh instance. |
+| Script returns **401** with `-Token`                                                                                               | 1       | Use `-Email` / `-Password` instead (web UI credentials). Regenerate static token if needed; ensure the value is not truncated and is the **user** token, not an unrelated API key.                                                |
 
 
