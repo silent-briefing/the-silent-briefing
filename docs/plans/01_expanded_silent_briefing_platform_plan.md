@@ -42,9 +42,9 @@
 
 ## Current Status
 
-- **Foundation (Phase 0):** COMPLETE — see `plans/04_foundation_supabase_directus.md` for Supabase migrations, Directus Docker, hook extension, API stub. **If you run `supabase db reset`**, follow the **Post-reset checklist** there: restart Directus, re-login (UI password may diverge from `cms/.env`), re-run `register-app-collections.ps1`. **Latest:** `register-app-collections.ps1` completed successfully on operator machine.
-- **Backend Phase 1 (from `plans/00_task_plan.md`):** Steps 0-1 complete (FastAPI skeleton, candidate ETL). Step 2 (entities/claims/vectors) in progress. Running on local FastAPI.
-- **Schema:** `races`, `candidates`, minimal `entities`, `jurisdictions`, `officials`, `entity_edges`, `dossier_claims`, `rag_chunks`, `intelligence_runs` live. Judicial roster extraction upserts UT supreme `officials` (worker). **1.4–1.6** live (retention, opinion→`rag_chunks`+embeddings, `LLMService` / Perplexity). Next: **1.7** adversarial pipeline.
+- **Foundation (Phase 0):** COMPLETE — see `plans/04_foundation_supabase_directus.md` for Supabase migrations, Directus Docker, hook extension, API stub. **Day-to-day schema changes:** use **`scripts/dev-db-migrate.*`** (`supabase migration up` + light Directus sync) so Directus is not wiped; **`dev-db-reset.*`** only for a full replay. **If you run `supabase db reset` alone**, follow the **Post-reset checklist** in `04`: repair Directus, align login with `cms/.env`, re-run `register-app-collections.ps1`.
+- **Backend Phase 1 (from `plans/00_task_plan.md`):** Steps 0–1 complete (FastAPI skeleton, **baseline candidate ETL** — vote.utah / optional SLCO / optional Civic, `races`+`candidates` upsert, worker + API + CI smoke). Step 2 (entities/claims/vectors + ANN RPC) largely landed; see `00_task_plan` Step 2 status for open RLS/enum work. Running on local FastAPI.
+- **Schema:** `races`, `candidates`, minimal `entities`, `jurisdictions`, `officials`, `entity_edges`, `dossier_claims`, `rag_chunks`, `intelligence_runs` live. Judicial roster extraction upserts UT supreme `officials` (worker). **Phase 1 (1.1–1.9)** complete in backend CLI terms. Next: **Phase 2** Directus CMS / operator console groundwork.
 
 ---
 
@@ -112,7 +112,7 @@
 - DB: `supabase/migrations/20260420140000_rag_chunks_ann_match.sql` — **HNSW** cosine index + `public.match_rag_chunks(query_embedding vector(1024), match_count int)` (execute **`service_role`** only).
 - Command: `uv run python -m briefing.worker opinion-ingestion --dry-run` (no key) / `--persist` (Supabase) / `--no-embed` / `--limit N`.
 - **Golden:** ≥3 dated opinion PDFs listed; ≥3 opinions yield extractable text; **≥3 total chunks** across them (`--dry-run` verifies locally).
-- **Done (2026-04-20):** Wired; full **embed+persist** needs `PERPLEXITY_API_KEY` + `SUPABASE_*` in `.env.local`.
+- **Done (2026-04-20):** Wired; full **embed+persist** needs `PERPLEXITY_API_KEY` + `SUPABASE_*` in `.env.local`. **`--persist`** runs an automatic **correlation** pass per opinion (same `CORRELATION_MODEL` + `entity_edges` persist) unless **`--no-correlate`**.
 - Commit: `git commit -m "feat: opinion chunking and embedding into rag_chunks"`
 
 **1.6 — LLM service abstraction** ✅
@@ -123,33 +123,36 @@
 - Test: `uv run pytest tests/` — **respx** mocks for `/v1/embeddings` + `/v1/sonar`.
 - Commit: `git commit -m "feat: LLMService abstraction with Perplexity implementation"`
 
-**1.7 — Adversarial dossier pipeline**
+**1.7 — Adversarial dossier pipeline** ✅
 
-- Service: `backend/briefing/services/llm/adversarial_pipeline.py` (~180 LOC)
+- Service: `backend/briefing/services/llm/adversarial_pipeline.py` — `retrieve_evidence`, `generate_draft`, `critique_draft`, `synthesize_final`, `run_adversarial_dossier_pipeline`, `persist_pipeline_runs`.
 - Flow:
-  1. `retrieve()` — Sonar for grounded evidence bundle (Stage 1)
-  2. `generate()` — `WRITER_MODEL` via Sonar Chat Completions → primary dossier draft
-  3. `critique()` — `ADVERSARIAL_MODEL` (stronger Sonar tier) via Sonar Chat Completions → structured critique JSON
-  4. `synthesize()` — Reconcile primary + adversarial; compute `groundedness_score`; flag conflicts
-  5. Persist: all 4 outputs to `intelligence_runs`. Flagged items surface in human review queue.
-- Test: Golden set of 1 justice (mock Perplexity responses). Verify all 4 pipeline stages produce non-empty structured output with `groundedness_score >= 0.7`.
+  1. **retrieve** — `CORRELATION_MODEL` → evidence JSON bundle (Stage 1)
+  2. **generate** — `WRITER_MODEL` → primary Markdown draft
+  3. **critique** — `ADVERSARIAL_MODEL` + JSON schema → structured critique
+  4. **synthesize** — `WRITER_MODEL` + JSON schema → `final_dossier`, `groundedness_score`, `requires_human_review`
+  5. **Persist** (optional): four rows in `intelligence_runs` (`official_id`, per-stage `raw_response`, final row carries scores).
+- Worker: `uv run python -m briefing.worker adversarial-dossier --subject "…" [--official-id UUID] [--dry-run] [--persist]`
+- Test: `tests/test_adversarial_pipeline.py` — sequenced mock LLM, `groundedness_score >= 0.7`, persist inserts ×4 (mocked).
+- **Done (2026-04-21):** wired; full run needs `PERPLEXITY_API_KEY`; `--persist` needs `SUPABASE_*` + `--official-id`.
 - Commit: `git commit -m "feat: adversarial dossier pipeline (primary + critique + synthesis)"`
 
-**1.8 — Correlation engine (cheap model, bulk)**
+**1.8 — Correlation engine (cheap model, bulk)** ✅
 
-- Service: `backend/briefing/services/llm/correlation.py` (~120 LOC)
-- On new opinion/claim ingestion: call `CORRELATION_MODEL=sonar` to extract entity mentions and propose `entity_edges` (e.g., opinion → bill, opinion → issue, official → official).
-- Confidence threshold: only auto-insert edges above 0.8. Below threshold → stage for human review in Directus.
-- Test: Feed known opinion text; verify proposed edges match known citations in opinion.
+- Service: `backend/briefing/services/llm/correlation.py` — `propose_edges_from_text` (JSON schema via `CORRELATION_MODEL`), `normalize_entity_type`, `persist_proposed_edges` (resolves/creates `entities`, inserts `entity_edges` with `status=proposed` when confidence ≥ default 0.8), `run_correlation_pass`.
+- Worker: `uv run python -m briefing.worker correlation-pass --text "…" [--text-file] [--context] [--min-confidence 0.8] [--dry-run] [--persist]` (`--persist` needs `SUPABASE_*`).
+- Tests: `tests/test_correlation.py` — normalization, propose (mock LLM), persist (monkeypatched entity resolution), dry-run / missing Supabase guard.
+- **Done (2026-04-19):** CLI + unit tests; **`opinion-ingestion --persist`** runs correlation per opinion unless **`--no-correlate`**; `correlation-recent-chunks` for batch catch-up.
 - Commit: `git commit -m "feat: correlation engine proposes entity edges from opinions/claims"`
 
-**1.9 — Schedule orchestration**
+**1.9 — Schedule orchestration** ✅
 
-- Update ARQ worker to schedule: judicial extraction (weekly), opinion refresh (daily for recent), correlation pass on new claims.
-- Test: `uv run python -m briefing.worker --dry-run` shows scheduled jobs.
+- **Reality check:** ARQ/Redis is **not** wired; work runs via **`python -m briefing.worker`** subcommands. This task delivers a **schedule catalog + cron-ready recipes**, not an in-process scheduler.
+- **Catalog:** `uv run python -m briefing.worker --dry-run` (exactly that argv shape) prints scheduled job definitions: judicial weekly, opinion ingestion daily, **correlation on recent `rag_chunks`**, optional retention weekly — each with cadence, suggested cron, and example CLI.
+- **Automation hook:** `correlation-recent-chunks` loads `rag_chunks` from the last `--hours` (default 48), concatenates text (caps `--max-chars`), runs the same Sonar correlation pass as `correlation-pass` (`--persist` / `--dry-run` / `--min-confidence`).
+- Test: `tests/test_worker_schedule.py`, `tests/test_recent_rag_correlation.py`; full suite `uv run pytest tests/`.
 - Commit: `git commit -m "feat: schedule judicial extraction and correlation jobs"`
-- **Status:** pending
-- **Files:** `backend/briefing/services/extraction/judicial.py`, `retention.py`, `opinions.py`; `backend/briefing/services/llm/base.py`, `perplexity.py`, `adversarial_pipeline.py`, `correlation.py`; new migrations.
+- **Done (2026-04-19):** `backend/briefing/services/schedule_catalog.py`, `backend/briefing/services/pipeline/recent_rag_correlation.py`, `briefing.worker` entry + subcommand.
 
 ### Phase 2: Directus CMS — Judicial Dossier Management
 

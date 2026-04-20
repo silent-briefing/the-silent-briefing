@@ -1,0 +1,11 @@
+{
+  "name": "silent-briefing-dark",
+  "version": "1.0.0",
+  "type": "module",
+  "directus:extension": {
+    "type": "theme",
+    "path": "index.js",
+    "source": "index.js",
+    "host": "^11.0.0"
+  }
+}

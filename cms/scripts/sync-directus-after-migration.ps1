@@ -63,11 +63,11 @@ if (-not $env:DIRECTUS_EMAIL -and (Test-Path $cmsEnvPath)) {
 }
 
 if ($env:DIRECTUS_EMAIL -and $env:DIRECTUS_PASSWORD) {
-    Write-Host "==> register-app-collections.ps1 (PATCH collection icons/notes — idempotent)"
+    Write-Host "==> register-app-collections.ps1 (PATCH collection icons/notes - idempotent)"
     & (Join-Path $PSScriptRoot "register-app-collections.ps1")
 } else {
     Write-Host @"
-==> Skipping register-app-collections — set ADMIN_EMAIL and ADMIN_PASSWORD in cms/.env
+==> Skipping register-app-collections - set ADMIN_EMAIL and ADMIN_PASSWORD in cms/.env
     (or DIRECTUS_EMAIL / DIRECTUS_PASSWORD) so the script can authenticate.
 "@
 }

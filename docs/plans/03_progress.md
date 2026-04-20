@@ -86,45 +86,14 @@ Local run and deployment walkthrough: [`README.md`](../README.md) at repo root.
 - Worker: `python -m briefing.worker correlation-pass` (`--text` / `--text-file`, `--persist`, `--dry-run`, `--min-confidence`).
 - Tests: `tests/test_correlation.py`. Plan `01_expanded` task **1.8** marked done; next tranche **1.9**.
 
-**2026-04-20 — Step 2 + Phase 2 plan tranche 6 (executing-plans: cross-cutting closure)**
-- **Cross-cutting verification:** `uv run pytest tests/` → **28** passed; `scripts/dev-db-migrate.ps1` → migrations up to date + `register-app-collections.ps1` (jurisdictions + P2.3 field meta) OK; **`supabase db lint`** → **No schema errors found** (`directus`, `extensions`, `public`).
-- **Docs:** `docs/plans/2026-04-21-step-2-phase-2-cohesive-implementation.md` — Appendix A **Database lint** note; **Execution status** table marks cohesive Step 2 + Phase 2 **closed** (officials hook smoke remains operator checklist per `04`).
-- **Total status (cohesive plan):** S0–S5 ✅ · P2.1–P2.4 ✅ · P2.3 field automation ✅ · CLI `db lint` ✅ · pytest ✅. **Deferred:** Phase 3 `authenticated` RLS, entity enum expansion (`00_task_plan` Step 2). **Note:** Studio **Security Advisor** may still list **ERROR** on `public.directus_*` (RLS + sensitive columns); that reflects **shared `public` + PostgREST**, not app-table gaps — see cohesive plan Appendix A *Database lint vs Studio Security Advisor*.
-
-**2026-04-19 — Directus Silent Briefing dark theme**
-- **Why:** Each Directus theme extension sets a single `appearance` (`light` or `dark`). The existing **Silent Briefing** theme is light-only, so it does not apply when Appearance mode is dark.
-- **Added:** `cms/extensions/silent-briefing-dark/` — **Silent Briefing (Dark)** (navy surfaces, gold accent, same fonts). After `docker compose restart directus`, choose **Settings → Appearance → Mode: Dark** and theme **Silent Briefing (Dark)**.
-
-**2026-04-20 — Step 2 + Phase 2 plan tranche 5 (executing-plans: P2.3 follow-up)**
-- **P2.3 automation:** `cms/scripts/register-app-collections.ps1` + `.sh` — PATCH `/fields` on **`dossier_claims`** (readonly LLM/provenance columns; **category** / **sentiment** dropdowns with **allowOther**) and **`intelligence_runs`** (readonly pipeline/model/status/tokens/cost/raw/groundedness/idempotency; **`requires_human_review`** explicitly editable). **PowerShell:** escape `${f}` in warning strings (avoid `$f:` parser glitch).
-- **Verification:** `uv run pytest tests/` → **28** passed; `register-app-collections.ps1` → all P2.3 PATCH lines OK against live Directus.
-
-**2026-04-20 — Step 2 + Phase 2 plan tranche 4 (executing-plans: P2.4)**
-- **P2.4:** `cms/schema/snapshot-baseline.yaml` — `jurisdictions` `display_template`, `sort_field: name`, self-`relations` entry on `parent_id` (FK `jurisdictions_parent_id_fkey`). `cms/scripts/register-app-collections.ps1` + `.sh` — PATCH collection meta, POST `relations` if missing, PATCH `fields/jurisdictions/parent_id` (`select-dropdown-m2o`). Migration `20260421104000_west_jordan_jurisdiction.sql` — seed city under `ut-slco` for tree QA.
-- **Operator:** After migrate + register, open **Content → jurisdictions** and switch layout to **Tree** (US → UT → SLCO → SLC / West Jordan).
-
-**2026-04-21 — Step 2 + Phase 2 plan tranche 2 (executing-plans: S3–S5)**
-- **S3:** `supabase/migrations/20260421103200_match_rag_chunks_public.sql` — `match_rag_chunks_public(vector, int)` returns `id`, `content`, `source_url`, `source_type`, `chunk_index`, `similarity`; `SECURITY DEFINER` + `search_path = public`; `LEAST(GREATEST(match_count,1),50)`; `EXECUTE` for **`authenticated`** + **`service_role`** only (not `anon`).
-- **S4:** `20260421103300_rls_anon_accepted_entity_edges.sql` — `anon` **SELECT** on `entity_edges` where `status = accepted` only.
-- **S5:** `20260421103400_step2_index_pass.sql` — partial indexes `idx_entity_edges_status_accepted`, `idx_intelligence_runs_human_review` (official_id indexes already exist).
-- **Docs:** `docs/plans/2026-04-21-step-2-phase-2-cohesive-implementation.md` — Appendix B (RPC matrix); fixed stray backticks in Goal / Tech / dependency table / Appendix A; Appendix A row for `entity_edges` + `rag_chunks` updated.
-- **Verification:** `dev-db-migrate.ps1` applied 3 migrations; `uv run pytest tests/` → **28** passed.
-
-**2026-04-20 — Step 2 + Phase 2 plan tranche 3 (executing-plans: P2.1–P2.3)**
-- **P2.1:** `cms/extensions/silent-briefing-theme/` — Studio theme (cream / navy nav / gold accent; Newsreader + Inter in theme rules). **Directus only loads extensions in immediate subfolders of `cms/extensions/`** (each with `package.json`); nested `themes/…` was ignored before this fix. Enable under **Settings → Appearance** (theme: **Silent Briefing**). Confirm under **Settings → Extensions** that local extensions are listed and enabled.
-- **P2.2:** `cms/extensions/official-intelligence-refresh/` — `POST /official-intelligence-refresh` proxies to FastAPI with `BACKEND_SERVICE_KEY` (requires logged-in Directus user). `cms/extensions/official-llm-refresh/` — Insights panel for manual refresh (configure official UUID in the panel’s wrench/settings); saving an official still runs `cms/extensions/llm-refresh-trigger/`.
-- **P2.3 (partial):** `cms/schema/snapshot-baseline.yaml` — `display_template` for `officials`, `dossier_claims`, `intelligence_runs`. Full field layouts (readonly LLM columns, dropdowns, sort) were **not** applied via snapshot: `directus schema apply` rejects **Create** for columns Directus already surfaces from Postgres (`Field "id" already exists`). **Follow-up:** configure layouts in Studio and `schema snapshot` into baseline, or PATCH `/fields/:collection/:field` from automation.
-- **Insights review queue:** create a dashboard with a **Filter** on `intelligence_runs` where `requires_human_review` equals true (manual; not in YAML).
-- **Verification:** `docker compose restart directus`; `npx directus schema apply` snapshot OK; `uv run pytest tests/` → **28** passed.
-
-**2026-04-21 — Step 2 + Phase 2 plan tranche 1 (executing-plans: S0–S2)**
-- **S0:** Filled **Appendix A** (RLS matrix + Directus DB user note + Security Advisor manual step) in `docs/plans/2026-04-21-step-2-phase-2-cohesive-implementation.md`; dropped stale `plans/02_findings.md` reference in that doc header.
-- **S1:** Migration `supabase/migrations/20260421103000_entities_dedupe_and_enum.sql` — non-unique index `idx_entities_type_canonical_norm` on `(type, lower(trim(canonical_name)))`.
-- **S2:** Migration `supabase/migrations/20260421103100_rag_chunks_freshness.sql` — `fetched_at`, `chunk_version`; `opinion-ingestion` persist sets both.
-- **Tooling fix:** `cms/scripts/sync-directus-after-migration.ps1` and `register-app-collections.ps1` — replaced Unicode dashes/quotes that broke PowerShell 5.1 parser.
-- **Verification:** `uv run pytest tests/` → **28** passed; `scripts/dev-db-migrate.ps1` → migrations up to date + Directus register OK.
-
 **2026-04-19 — Phase 1 task 1.9 schedule orchestration (executing-plans tranche)**
 - `backend/briefing/services/schedule_catalog.py`: printable registry (cron hints + CLI one-liners); **`python -m briefing.worker --dry-run`** prints it (two-token argv only).
 - `backend/briefing/services/pipeline/recent_rag_correlation.py` + worker **`correlation-recent-chunks`**: recent `rag_chunks` → `run_correlation_pass`.
 - Tests: `tests/test_worker_schedule.py`, `tests/test_recent_rag_correlation.py`. **`01_expanded` Phase 1** backend checklist complete; next **Phase 2**.
+
+**2026-04-19 — Step 3 tranche 1 (U3.1–U3.3, executing-plans batch)**
+- **U3.1:** `backend/briefing/services/intelligence/evidence_bundle.py` — `EvidenceBundle` / `EvidenceItem`, `evidence_bundle_response_schema()` for Sonar `response_format`; golden `tests/fixtures/evidence_bundle_golden.json`; `tests/test_evidence_bundle.py`.
+- **U3.2:** `retrieval_stages.py` — parameterized A/B/C prompts, `persist_retrieval_bundle`, optional `--correlate` → `run_correlation_pass` on merged text; worker **`retrieval-pass`**; config **`retrieval_model`** (default `sonar`); `tests/test_retrieval_stages.py` (Respx + mocks).
+- **U3.3:** `dossier_writer.py` — load latest A/B/C claims by `metadata.evidence_bundle`, optional RAG via `match_rag_chunks_public`, Markdown draft → `dossier_claims` (`category=Dossier / Draft`, `pipeline_stage=writer_sonar`); worker **`dossier-write`**; `tests/test_dossier_writer.py`.
+- **Docs:** `CLAUDE.md` planning table + worker hints; `AGENTS.md` intelligence layout; `schedule_catalog` on-demand Step 3 job.
+- **Verify:** `uv run pytest` from `backend/` (full suite).

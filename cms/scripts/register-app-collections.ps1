@@ -123,4 +123,148 @@ foreach ($c in $collections) {
     }
 }
 
-Write-Host "Done. Refresh Directus — Content should list these collections (same Postgres as Supabase Studio)."
+# P2.4: jurisdictions hierarchy (self M2O on parent_id) + collection sort/display for Tree layout in Content
+try {
+    $jMeta = @{
+        meta = @{
+            display_template = '{{name}} · {{level}}'
+            sort_field       = 'name'
+            note             = 'Supabase public.jurisdictions — hierarchical via parent_id; switch Content layout to Tree after relation exists.'
+        }
+    } | ConvertTo-Json -Compress -Depth 5
+    Invoke-RestMethod `
+        -Uri "$BaseUrl/collections/jurisdictions" `
+        -Method Patch `
+        -Headers $headers `
+        -ContentType "application/json; charset=utf-8" `
+        -Body $jMeta | Out-Null
+    Write-Host "OK: jurisdictions (display/sort meta)"
+
+    $rels = (Invoke-RestMethod -Uri "$BaseUrl/relations" -Headers $headers -Method Get).data
+    $hasParent = $rels | Where-Object { $_.collection -eq 'jurisdictions' -and $_.field -eq 'parent_id' }
+    if (-not $hasParent) {
+        $relBody = @{
+            many_collection = 'jurisdictions'
+            many_field      = 'parent_id'
+            one_collection  = 'jurisdictions'
+            one_field       = $null
+        } | ConvertTo-Json -Compress -Depth 5
+        Invoke-RestMethod `
+            -Uri "$BaseUrl/relations" `
+            -Method Post `
+            -Headers $headers `
+            -ContentType "application/json; charset=utf-8" `
+            -Body $relBody | Out-Null
+        Write-Host "OK: jurisdictions parent_id -> jurisdictions (relation created)"
+    } else {
+        Write-Host "OK: jurisdictions parent relation already present"
+    }
+
+    $fldBody = @{
+        meta = @{
+            interface = 'select-dropdown-m2o'
+            options   = @{
+                template = '{{name}} · {{slug}}'
+            }
+        }
+    } | ConvertTo-Json -Compress -Depth 5
+    Invoke-RestMethod `
+        -Uri "$BaseUrl/fields/jurisdictions/parent_id" `
+        -Method Patch `
+        -Headers $headers `
+        -ContentType "application/json; charset=utf-8" `
+        -Body $fldBody | Out-Null
+    Write-Host "OK: fields/jurisdictions/parent_id (M2O picker)"
+} catch {
+    Write-Warning "Jurisdictions hierarchy setup failed: $($_.Exception.Message). Is the jurisdictions table present? Run migrations, then re-run."
+}
+
+# P2.3 follow-up (tranche 5): readonly LLM/provenance fields + dropdowns (schema apply cannot create field rows for mirrored PKs)
+function Invoke-DirectusFieldPatch {
+    param(
+        [string] $Collection,
+        [string] $Field,
+        [hashtable] $Meta
+    )
+    $payload = @{ meta = $Meta } | ConvertTo-Json -Compress -Depth 12
+    Invoke-RestMethod `
+        -Uri "$BaseUrl/fields/$Collection/$Field" `
+        -Method Patch `
+        -Headers $headers `
+        -ContentType "application/json; charset=utf-8" `
+        -Body $payload | Out-Null
+}
+
+Write-Host "==> P2.3 field meta (dossier_claims / intelligence_runs)"
+$claimReadonly = @(
+    'pipeline_stage', 'groundedness_score', 'llm_provider', 'model_id', 'api_surface',
+    'prompt_id', 'prompt_version', 'retrieved_at'
+)
+foreach ($f in $claimReadonly) {
+    try {
+        Invoke-DirectusFieldPatch -Collection 'dossier_claims' -Field $f -Meta @{ readonly = $true }
+        Write-Host "OK: dossier_claims.$f (readonly)"
+    } catch {
+        Write-Warning "dossier_claims.${f}: $($_.Exception.Message)"
+    }
+}
+try {
+    $catChoices = @(
+        @{ text = 'Retention Voting'; value = 'Retention Voting' },
+        @{ text = 'Bio'; value = 'Bio' },
+        @{ text = 'Record'; value = 'Record' },
+        @{ text = 'News'; value = 'News' },
+        @{ text = 'Analysis'; value = 'Analysis' },
+        @{ text = 'Vetting'; value = 'Vetting' },
+        @{ text = 'Other'; value = 'Other' }
+    )
+    Invoke-DirectusFieldPatch -Collection 'dossier_claims' -Field 'category' -Meta @{
+        interface = 'select-dropdown'
+        options   = @{
+            choices    = $catChoices
+            allowOther = $true
+        }
+    }
+    Write-Host 'OK: dossier_claims.category (dropdown + allowOther)'
+} catch {
+    Write-Warning "dossier_claims.category: $($_.Exception.Message)"
+}
+try {
+    $sentChoices = @(
+        @{ text = 'Positive'; value = 'positive' },
+        @{ text = 'Negative'; value = 'negative' },
+        @{ text = 'Neutral'; value = 'neutral' },
+        @{ text = 'Unknown'; value = 'unknown' }
+    )
+    Invoke-DirectusFieldPatch -Collection 'dossier_claims' -Field 'sentiment' -Meta @{
+        interface = 'select-dropdown'
+        options   = @{
+            choices    = $sentChoices
+            allowOther = $true
+        }
+    }
+    Write-Host 'OK: dossier_claims.sentiment (dropdown + allowOther)'
+} catch {
+    Write-Warning "dossier_claims.sentiment: $($_.Exception.Message)"
+}
+
+$runReadonly = @(
+    'pipeline_stage', 'model_id', 'status', 'error_message', 'tokens_input', 'tokens_output',
+    'cost_usd', 'raw_response', 'groundedness_score', 'idempotency_key'
+)
+foreach ($f in $runReadonly) {
+    try {
+        Invoke-DirectusFieldPatch -Collection 'intelligence_runs' -Field $f -Meta @{ readonly = $true }
+        Write-Host "OK: intelligence_runs.$f (readonly)"
+    } catch {
+        Write-Warning "intelligence_runs.${f}: $($_.Exception.Message)"
+    }
+}
+try {
+    Invoke-DirectusFieldPatch -Collection 'intelligence_runs' -Field 'requires_human_review' -Meta @{ readonly = $false }
+    Write-Host 'OK: intelligence_runs.requires_human_review (editable)'
+} catch {
+    Write-Warning "intelligence_runs.requires_human_review: $($_.Exception.Message)"
+}
+
+Write-Host "Done. Refresh Directus - Content should list these collections (same Postgres as Supabase Studio)."

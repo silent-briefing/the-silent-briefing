@@ -35,7 +35,7 @@ collections:
       collapse: open
       collection: dossier_claims
       color: null
-      display_template: null
+      display_template: '{{category}} — {{pipeline_stage}}'
       group: null
       hidden: false
       icon: article
@@ -107,7 +107,7 @@ collections:
       collapse: open
       collection: intelligence_runs
       color: null
-      display_template: null
+      display_template: '{{status}} — review: {{requires_human_review}}'
       group: null
       hidden: false
       icon: psychology
@@ -131,16 +131,16 @@ collections:
       collapse: open
       collection: jurisdictions
       color: null
-      display_template: null
+      display_template: '{{name}} · {{level}}'
       group: null
       hidden: false
       icon: account_tree
       item_duplication_fields: null
-      note: Supabase public.jurisdictions
+      note: Supabase public.jurisdictions — hierarchical via parent_id; use Content layout Tree when the relation exists.
       preview_url: null
       singleton: false
       sort: null
-      sort_field: null
+      sort_field: name
       translations: null
       unarchive_value: null
       versioning: false
@@ -155,7 +155,7 @@ collections:
       collapse: open
       collection: officials
       color: null
-      display_template: null
+      display_template: '{{full_name}}'
       group: null
       hidden: false
       icon: badge
@@ -219,6 +219,7 @@ collections:
     schema:
       name: rag_chunks
 fields: []
+
 systemFields:
   - collection: directus_activity
     field: timestamp
@@ -232,4 +233,27 @@ systemFields:
     field: parent
     schema:
       is_indexed: true
-relations: []
+relations:
+  # Self M2O: enables Tree layout in Content for Utah → SLCO → SLC / West Jordan, etc.
+  - collection: jurisdictions
+    field: parent_id
+    related_collection: jurisdictions
+    schema:
+      table: jurisdictions
+      column: parent_id
+      foreign_key_schema: public
+      foreign_key_table: jurisdictions
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL
+      constraint_name: jurisdictions_parent_id_fkey
+    meta:
+      many_collection: jurisdictions
+      many_field: parent_id
+      one_collection: jurisdictions
+      one_field: null
+      one_collection_field: null
+      one_allowed_collections: null
+      one_deselect_action: nullify
+      junction_field: null
+      sort_field: null

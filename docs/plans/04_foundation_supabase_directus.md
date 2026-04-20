@@ -582,7 +582,7 @@ git commit -m "feat: directus collections configured for officials hierarchy"
 
 **Files:**
 
-- Create: `cms/extensions/flows/llm-refresh-trigger/` (scaffolded)
+- Create: `cms/extensions/llm-refresh-trigger/` (scaffolded; flat under `cms/extensions/`)
 
 **Step 1: Scaffold extension**
 
@@ -592,11 +592,11 @@ npx create-directus-extension@latest
 ```
 
 Select: `type: hook`, `name: llm-refresh-trigger`, `language: typescript`.
-Expected: `cms/extensions/hooks/llm-refresh-trigger/` created with `src/index.ts`.
+The CLI may nest output (e.g. under `hooks/`). **Directus only loads extensions that sit directly under `cms/extensions/<name>/` with a `package.json`.** Move or symlink the scaffolded folder to `cms/extensions/llm-refresh-trigger/` (flat) before relying on it in Docker.
 
 **Step 2: Implement hook (~80 LOC)**
 
-Edit `cms/extensions/hooks/llm-refresh-trigger/src/index.ts`:
+Edit `cms/extensions/llm-refresh-trigger/src/index.ts` (or `index.js` if using JavaScript):
 
 ```typescript
 import type { HookConfig } from '@directus/types';
@@ -629,7 +629,7 @@ export default config;
 **Step 3: Build extension**
 
 ```bash
-cd cms/extensions/hooks/llm-refresh-trigger
+cd cms/extensions/llm-refresh-trigger
 bun run build
 ```
 
