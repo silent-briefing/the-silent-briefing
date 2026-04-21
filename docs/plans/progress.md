@@ -113,6 +113,31 @@
 
 ---
 
+## 2026-04-21 — Phase A tranche 3 (A.6 shell + A.7 shadcn primitives)
+
+**Phase / tasks:** A.6 app shell + operator/admin route groups; A.7 shadcn/ui primitives re-themed + dev storyboard + tests.
+
+**What shipped (A.6 — summary):**
+- Route groups `(operator)/` and `(admin)/admin/` with `OperatorShell` / `AdminShell`, `TopBar`, `Sidebar`, `AuditLogFooter`; Lucide 24px nav; gold focus rings; Playwright smoke `e2e/shell.spec.ts` (manual `bun run dev` + `test:e2e`).
+- `next.config.ts` `allowedDevOrigins` includes `127.0.0.1`.
+
+**What shipped (A.7):**
+- `bunx shadcn@latest init` (base-nova + `@base-ui/react`) + added button, input, label, select, dialog, dropdown-menu, table, tabs, checkbox, switch, popover, command, badge, textarea, input-group, sonner; **`toast.tsx`** re-exports Sonner (`toast` + `Toaster`) because registry deprecated Radix toast.
+- **`form.tsx`** — react-hook-form + `@radix-ui/react-slot` (`@hookform/resolvers` + zod).
+- **`globals.css`** — removed neutral oklch overrides; single `@theme` maps shadcn semantics to `design/colors_and_type.css` tokens (gold `--ring` / `--color-ring`; tonal `--color-secondary` = surface ladder — avoids clashing with design `--secondary` crimson).
+- Focus rings normalized to **2px ring + 4px offset** on interactive primitives; badge pill uses **`rounded-full`**.
+- **Dev-only** `/_/primitives` storyboard (`primitives-board.tsx`); **`proxy.ts`** allows `/_/*` without auth in development for axe.
+- **`AppProviders`:** `ThemeProvider` (light) + `<Toaster />` for Sonner.
+- **Tests:** `src/components/ui/primitives.tokens.test.tsx` (class guards); `vitest.config.ts` `@` alias + `vitest.setup.ts` (jest-dom); `e2e/primitives.spec.ts` (axe critical violations when page reachable).
+- **`README.md`** — documents `/_/primitives`.
+
+**Verification:**
+- `cd console && bun run build && bun run test && bun run lint` → green.
+
+**Next session:** A.8 BFF admin namespace + Clerk JWT verification (`deps_auth.py`, `/v1/admin/health`, pytest).
+
+---
+
 ## Template for future entries
 
 ```markdown

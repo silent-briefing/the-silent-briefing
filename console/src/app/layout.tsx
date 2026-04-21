@@ -1,7 +1,11 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Inter, Newsreader } from "next/font/google";
+import { Inter, Newsreader, Geist } from "next/font/google";
+import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -29,9 +33,13 @@ export default function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${newsreader.variable} ${inter.variable} h-full antialiased`}
+        className={cn("h-full", "antialiased", newsreader.variable, inter.variable, "font-sans", geist.variable)}
       >
-        <body className="min-h-full flex flex-col bg-surface font-sans">{children}</body>
+        <body className="flex min-h-screen flex-col bg-surface font-sans text-[var(--fg-2)]">
+          <AppProviders>
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          </AppProviders>
+        </body>
       </html>
     </ClerkProvider>
   );

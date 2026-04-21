@@ -1,12 +1,18 @@
 @import "tailwindcss";
 @import "../styles/tokens.css";
 @import "../styles/fonts.css";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* Design tokens → Tailwind. Shadcn "secondary" is tonal surfaces — crimson signal stays on `var(--secondary)` in CSS for raw use. */
 @theme {
   --color-primary: var(--primary);
   --color-surface: var(--surface);
   --color-tertiary: var(--tertiary);
-  --color-secondary: var(--secondary);
+  --color-secondary: var(--surface-container);
+  --color-secondary-foreground: var(--fg-2);
   --color-surface-1: var(--surface-container-low);
   --color-surface-2: var(--surface-container);
   --color-surface-3: var(--surface-container-high);
@@ -17,10 +23,50 @@
   --shadow-md: var(--shadow-md);
   --font-serif: var(--font-newsreader), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--fg-2);
+  --color-card: var(--surface-container-low);
+  --color-card-foreground: var(--fg-2);
+  --color-popover: var(--surface-container-lowest);
+  --color-popover-foreground: var(--fg-2);
+  --color-primary-foreground: var(--on-primary);
+  --color-muted: var(--surface-container-high);
+  --color-muted-foreground: var(--fg-4);
+  --color-accent: var(--surface-container);
+  --color-accent-foreground: var(--fg-1);
+  --color-destructive: var(--status-flagged);
+  --color-border: var(--border-ghost);
+  --color-input: var(--border-ghost-strong);
+  --color-ring: var(--tertiary);
+  --color-chart-1: var(--tertiary);
+  --color-chart-2: var(--fg-3);
+  --color-chart-3: var(--fg-4);
+  --color-chart-4: var(--status-vetted);
+  --color-chart-5: var(--status-pending);
+  --color-sidebar: var(--primary);
+  --color-sidebar-foreground: var(--fg-inv-1);
+  --color-sidebar-primary: var(--tertiary);
+  --color-sidebar-primary-foreground: var(--on-tertiary);
+  --color-sidebar-accent: var(--primary-container);
+  --color-sidebar-accent-foreground: var(--fg-inv-2);
+  --color-sidebar-border: rgba(251, 249, 245, 0.12);
+  --color-sidebar-ring: var(--tertiary);
+}
+
+/* shadcn radius scale (components use --radius and multipliers) */
+:root {
+  --radius: 4px;
 }
 
 body {
   background: var(--background);
   color: var(--fg-2);
   font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/40;
+  }
 }

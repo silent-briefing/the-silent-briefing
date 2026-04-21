@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { roleFromSessionClaims } from "@/lib/auth/guards";
 import { roleAtLeast, type Role } from "@/lib/auth/roles";
 
@@ -11,8 +12,15 @@ const isPublicRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
+function isDevPrimitivesStoryboard(req: NextRequest) {
+  return (
+    process.env.NODE_ENV === "development" &&
+    req.nextUrl.pathname.startsWith("/_/")
+  );
+}
+
 export default clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) {
+  if (isPublicRoute(req) || isDevPrimitivesStoryboard(req)) {
     return NextResponse.next();
   }
 
