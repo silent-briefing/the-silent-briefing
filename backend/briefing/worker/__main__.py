@@ -209,7 +209,10 @@ def _cmd_correlation_pass(args: argparse.Namespace) -> int:
 
 
 def _cmd_retrieval_pass(args: argparse.Namespace) -> int:
+    from typing import Literal
+
     from briefing.config import get_settings
+    from briefing.services.intelligence.evidence_bundle import RetrievalStageCode
     from briefing.services.intelligence.retrieval_stages import (
         parse_stage_list,
         run_retrieval_stages_for_official,
@@ -221,15 +224,50 @@ def _cmd_retrieval_pass(args: argparse.Namespace) -> int:
     except ValueError as e:
         print(f"retrieval-pass: {e}", file=sys.stderr)
         return 1
-    try:
-        stages = parse_stage_list(args.stages)
-    except ValueError as e:
-        print(f"retrieval-pass: {e}", file=sys.stderr)
-        return 1
+    settings = get_settings()
+    stages: list[RetrievalStageCode]
+    stage_c_intensity: Literal["full", "light"] = "full"
+
+    if args.use_routing or args.skip_if_fresh:
+        from supabase import create_client
+
+        from briefing.services.intelligence.routing import (
+            fetch_subject_alignment,
+            is_retrieval_stale,
+            retrieval_stages_and_c_intensity,
+        )
+
+        if not settings.supabase_url or not settings.supabase_service_role_key:
+            print(
+                "retrieval-pass: --use-routing / --skip-if-fresh need SUPABASE_URL "
+                "and SUPABASE_SERVICE_ROLE_KEY",
+                file=sys.stderr,
+            )
+            return 1
+        client = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        if args.skip_if_fresh and not is_retrieval_stale(client, args.official_id, settings):
+            print("retrieval-pass: skip-if-fresh — recent retrieval_sonar claims; skipping LLM.")
+            return 0
+        if args.use_routing:
+            align = fetch_subject_alignment(client, args.official_id)
+            stages, stage_c_intensity = retrieval_stages_and_c_intensity(align, settings)
+        else:
+            try:
+                stages = parse_stage_list(args.stages)
+            except ValueError as e:
+                print(f"retrieval-pass: {e}", file=sys.stderr)
+                return 1
+    else:
+        try:
+            stages = parse_stage_list(args.stages)
+        except ValueError as e:
+            print(f"retrieval-pass: {e}", file=sys.stderr)
+            return 1
+
     try:
         bundles = run_retrieval_stages_for_official(
             llm,
-            get_settings(),
+            settings,
             official_id=args.official_id,
             stages=stages,
             subject=args.subject or "",
@@ -237,6 +275,7 @@ def _cmd_retrieval_pass(args: argparse.Namespace) -> int:
             persist=args.persist,
             dry_run=args.dry_run,
             correlate=args.correlate,
+            stage_c_intensity=stage_c_intensity,
         )
     except Exception as e:
         print(f"retrieval-pass failed: {e}", file=sys.stderr)
@@ -501,6 +540,22 @@ def _dispatch_command() -> int:
         "--correlate",
         action="store_true",
         help="After stages, run correlation pass on merged bundle text (uses --persist for edges)",
+    )
+    rp.add_argument(
+        "--use-routing",
+        action="store_true",
+        help=(
+            "Derive A/B/C stages from officials.subject_alignment and config "
+            "(GOP: A+C lighter vetting; else full A,B,C). Ignores --stages."
+        ),
+    )
+    rp.add_argument(
+        "--skip-if-fresh",
+        action="store_true",
+        help=(
+            "If latest retrieval_sonar claim is newer than RETRIEVAL_STALE_DAYS, exit 0 without LLM "
+            "(needs Supabase)."
+        ),
     )
     rp.set_defaults(_handler=_cmd_retrieval_pass)
 

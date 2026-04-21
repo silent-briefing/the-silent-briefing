@@ -97,3 +97,9 @@ Local run and deployment walkthrough: [`README.md`](../README.md) at repo root.
 - **U3.3:** `dossier_writer.py` — load latest A/B/C claims by `metadata.evidence_bundle`, optional RAG via `match_rag_chunks_public`, Markdown draft → `dossier_claims` (`category=Dossier / Draft`, `pipeline_stage=writer_sonar`); worker **`dossier-write`**; `tests/test_dossier_writer.py`.
 - **Docs:** `CLAUDE.md` planning table + worker hints; `AGENTS.md` intelligence layout; `schedule_catalog` on-demand Step 3 job.
 - **Verify:** `uv run pytest` from `backend/` (full suite).
+
+**2026-04-19 — Step 3 tranche 2 (U3.4–U3.6, executing-plans batch)**
+- **U3.4:** `intelligence/routing.py` — `officials.subject_alignment` → stage list + lighter Stage C for GOP (`RETRIEVAL_STAGE_SPEC_GOP` default `A,C`, `RETRIEVAL_STAGE_SPEC_DEFAULT` default `A,B,C`); staleness via `RETRIEVAL_STALE_DAYS` (default 30); worker **`retrieval-pass`** flags `--use-routing`, `--skip-if-fresh`; `tests/test_routing.py`.
+- **U3.5:** `supabase/migrations/20260422103000_authenticated_console_reads.sql`; Clerk + RLS documented in `docs/plans/04_foundation_supabase_directus.md`; `CLAUDE.md` env hints for console.
+- **U3.6:** `GET /v1/console/judicial/supreme-court`, `GET /v1/console/officials/{slug}` (service-role BFF); `tests/test_api_console.py`.
+- **Verify:** `uv run pytest` → 46 passed.

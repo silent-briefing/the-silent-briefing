@@ -111,6 +111,8 @@
 
 ### Task U3.4: Routing + staleness (GOP vs opposition)
 
+**Status (2026-04-19):** Implemented — see `docs/plans/03_progress.md` and `backend/briefing/services/intelligence/routing.py`.
+
 **Files:**
 
 - Modify: `backend/briefing/config.py` — `SubjectRouting` or env flags
@@ -126,6 +128,8 @@
 ---
 
 ### Task U3.5: RLS + Clerk JWT for console reads (narrow tranche)
+
+**Status (2026-04-19):** Migration + foundation doc section landed; operators must wire Clerk JWT template per doc.
 
 **Files:**
 
@@ -144,6 +148,8 @@
 ---
 
 ### Task U3.6: FastAPI BFF routes (optional but recommended)
+
+**Status (2026-04-19):** `backend/briefing/api/routes/console.py` registered on app.
 
 **Files:**
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from briefing.config import Settings, get_settings
 from briefing.services.intelligence.evidence_bundle import (
@@ -85,12 +85,19 @@ def run_retrieval_stage(
     subject_seed: str,
     rag_context: str = "",
     model: str | None = None,
+    c_intensity: Literal["full", "light"] | None = None,
 ) -> EvidenceBundle:
     """One Sonar call with JSON schema output; stage is enforced after parse (not from model)."""
+    focus = STAGE_FOCUS[stage]
+    if stage == "C" and c_intensity == "light":
+        focus += (
+            " Keep this pass tight: at most the three most material, citable items; "
+            "skip speculative or thinly sourced angles."
+        )
     sys = (
         "You are Stage 1 retrieval for an internal Utah political intelligence dossier. "
         "Use web-aware search. Return ONLY JSON matching the schema (no markdown). "
-        f"Pass focus: {STAGE_FOCUS[stage]}"
+        f"Pass focus: {focus}"
     )
     ctx = rag_context.strip() or "(none — rely on your retrieval)"
     user = (
@@ -133,6 +140,7 @@ def run_retrieval_stages_for_official(
     persist: bool = False,
     dry_run: bool = False,
     correlate: bool = False,
+    stage_c_intensity: Literal["full", "light"] = "full",
 ) -> list[EvidenceBundle]:
     """Run each stage in order; optionally persist claims and run correlation on merged text."""
     from supabase import create_client
@@ -149,6 +157,9 @@ def run_retrieval_stages_for_official(
     seed = resolve_subject_seed(client, official_id, subject)
     bundles: list[EvidenceBundle] = []
     for st in stages:
+        c_int: Literal["full", "light"] | None = (
+            stage_c_intensity if st == "C" else None
+        )
         b = run_retrieval_stage(
             llm,
             cfg,
@@ -156,6 +167,7 @@ def run_retrieval_stages_for_official(
             official_id=official_id,
             subject_seed=seed,
             rag_context=rag_context,
+            c_intensity=c_int,
         )
         bundles.append(b)
         if persist and not dry_run and client is not None:

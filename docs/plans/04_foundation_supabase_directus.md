@@ -749,6 +749,18 @@ After completing Tasks 1-8:
 
 **Proceed to:** `plans/01_expanded_silent_briefing_platform_plan.md` Phase 1 (judicial extraction + full LLM pipeline) and Phase 3 (operator console frontend).
 
+---
+
+## Clerk JWT → Supabase `authenticated` (Step 3 U3.5)
+
+**Goal:** Phase 3 Next.js operator console reads Supabase with the **end-user’s JWT** (not `service_role` in the browser). Backend workers and FastAPI BFF continue to use `service_role` server-side.
+
+1. **Clerk:** Create a [Supabase JWT template](https://clerk.com/docs/integrations/databases/supabase) in the Clerk dashboard so issued tokens include `sub` (maps to `auth.uid()` in RLS) and any custom claims you standardize on.
+2. **Supabase:** Apply migration `20260422103000_authenticated_console_reads.sql` (policies on `jurisdictions`, `officials`, `dossier_claims`, `entity_edges` for role `authenticated`). Re-run `scripts/dev-db-migrate.*` after pull.
+3. **Scope:** `authenticated` may SELECT accepted `entity_edges` only (same product bar as anon). `dossier_claims` rows must reference a non–soft-deleted `official` or have `official_id` null (candidate-linked).
+4. **RAG:** `match_rag_chunks_public` already grants `EXECUTE` to `authenticated`; embeddings + RPC should run from a **server** context (Server Action / Route Handler / BFF) so the Perplexity key stays off the client unless you add a dedicated edge embedder.
+5. **Env (console app):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, plus Clerk `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`. Never expose `SUPABASE_SERVICE_ROLE_KEY` in Next.js client bundles.
+
 ## Errors Encountered
 
 

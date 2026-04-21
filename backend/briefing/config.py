@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     google_civic_api_key: str = ""
     google_civic_voter_address: str = ""
     google_civic_election_id: str = ""
+    # Step 3 routing (U3.4): comma-separated A,B,C — GOP skips judicial-record (B) by default.
+    retrieval_stage_spec_gop: str = Field(default="A,C")
+    retrieval_stage_spec_default: str = Field(default="A,B,C")
+    # Days without a retrieval_sonar claim before ``--skip-if-fresh`` treats official as stale; 0 = always stale.
+    retrieval_stale_days: int = Field(default=30, ge=0)
 
 
 @lru_cache

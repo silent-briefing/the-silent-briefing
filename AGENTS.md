@@ -1,6 +1,6 @@
 ## Learned User Preferences
 
-- Keep planning working files in `plans/` (`00_task_plan.md` for numbered steps and current phase, `findings.md`, `progress.md`; expanded roadmap in `01_expanded_silent_briefing_platform_plan.md`).
+- Keep planning working files in **`docs/plans/`** (`00_task_plan.md`, `03_progress.md`, cohesive step docs; expanded roadmap in `01_expanded_silent_briefing_platform_plan.md`).
 - Prefer Clerk over Supabase Auth when choosing an authentication provider.
 - For product UX and information architecture, aim for Palantir-style integration and cross-referencing between related entities.
 - Initial domain emphasis: United States Supreme Court (a hub for justices with supporting context and news).
@@ -8,6 +8,10 @@
 - Prefer self-hosted development infrastructure except where an external dependency is unavoidable.
 - For Python in this repo, use `uv` (`uv add`, `uv sync`, `uv run`) rather than ad-hoc virtualenv and pip workflows.
 - Prefer scaffolding for Directus and Supabase (for example `npx create-directus-extension@latest`, Supabase CLI, and Supabase MCP) instead of hand-writing boilerplate that tools generate.
+- When planning, never overwrite existing plan files in `docs/plans/`; create new dated files (`YYYY-MM-DD-<feature>.md`) alongside them.
+- Build a custom GUI (operator console **plus** admin interface) as the primary surface; Directus is a fallback/nice-to-have, not the way the user wants to administer the site.
+- Keep source files small — target roughly ~200 LOC per file.
+- Consult the in-repo `design/` assets (design system, UI kits) when doing any frontend/UX work rather than inventing styling.
 
 ## Learned Workspace Facts
 
@@ -21,4 +25,6 @@
 - Directus Insights starts from an empty “No Dashboards” state until you create a dashboard; custom panels (for example official intelligence refresh) are added inside a dashboard layout, not from the Insights landing page alone.
 - Supabase/Directus foundation work (local CLI, migrations, Docker, hooks) is tracked task-by-task in `plans/04_foundation_supabase_directus.md` (Phase 0 there).
 - Configurable **source URLs** (vote.utah, SLCO, utcourts, Ballotpedia, Google Civic) default in `backend/briefing/defaults/source_urls.py` and override via matching `UPPER_SNAKE` env vars on `Settings` (see `CLAUDE.md` Environment Variables).
-- **Step 3 staged retrieval** lives under `backend/briefing/services/intelligence/`: `evidence_bundle.py` (Pydantic + Sonar JSON schema), `retrieval_stages.py` (A/B/C passes → `dossier_claims` with `category` `Research / Stage *` and `metadata.evidence_bundle`), `dossier_writer.py` (latest bundles + optional `match_rag_chunks_public` → `writer_sonar` claim `Dossier / Draft`). Workers: `python -m briefing.worker retrieval-pass`, `dossier-write`. Env: `RETRIEVAL_MODEL` (default `sonar`) alongside existing `WRITER_MODEL` / `CORRELATION_MODEL`.
+- **Step 3 intelligence** — `backend/briefing/services/intelligence/`: `evidence_bundle.py`, `retrieval_stages.py` (A/B/C; Stage C can be **light** for GOP routing), `dossier_writer.py`, **`routing.py`** (`officials.subject_alignment` → stage list; staleness helper). Workers: `retrieval-pass` (`--use-routing`, `--skip-if-fresh`, `--correlate`), `dossier-write`. Env: `RETRIEVAL_MODEL`, `RETRIEVAL_STAGE_SPEC_GOP`, `RETRIEVAL_STAGE_SPEC_DEFAULT`, `RETRIEVAL_STALE_DAYS`.
+- **Operator console BFF (Phase 3 prep):** FastAPI `GET /v1/console/judicial/supreme-court`, `GET /v1/console/officials/{slug}` — **service_role** server-side only; browser should use anon/authenticated Supabase client + Clerk per `docs/plans/04_foundation_supabase_directus.md`.
+- Design system lives under `design/` — see `design/README.md`, `design/colors_and_type.css`, and UI kits such as `design/ui_kits/operator_console/` (reference materials for all frontend work).

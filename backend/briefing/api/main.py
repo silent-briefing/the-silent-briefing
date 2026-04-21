@@ -6,6 +6,7 @@ import uuid
 from fastapi import FastAPI, Request
 
 from briefing.api.lifespan import app_lifespan
+from briefing.api.routes.console import router as console_router
 from briefing.api.routes.extraction import router as extraction_router
 from briefing.api.routes.intelligence import router as intelligence_router
 
@@ -20,6 +21,7 @@ def _package_version() -> str:
 app = FastAPI(title="Silent Briefing API", lifespan=app_lifespan)
 app.include_router(intelligence_router)
 app.include_router(extraction_router)
+app.include_router(console_router)
 
 
 @app.middleware("http")

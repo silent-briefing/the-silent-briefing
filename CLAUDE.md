@@ -28,15 +28,15 @@ When a scripted path exists, **run it** (from the repo root in a terminal) and f
 
 ## Planning Files
 
-All planning files live in `plans/` with numeric prefixes:
+Canonical plans live under **`docs/plans/`** (session log, cohesive step plans, foundation). Legacy `plans/` at repo root may symlink or mirror—prefer **`docs/plans`** for new edits.
 
 | File | Purpose |
 |------|---------|
-| `plans/00_task_plan.md` | Backend Phase 1 — ETL/LLM/Supabase schema (original) |
-| `plans/01_expanded_silent_briefing_platform_plan.md` | Expanded scope: judicial, CMS, UI, Palantir vision |
-| `plans/02_findings.md` | Research: CMS options, judicial sources, AI orchestration, design |
-| `plans/03_progress.md` | Session log, test results, decisions |
-| `plans/04_foundation_supabase_directus.md` | Foundation: Supabase CLI setup + Directus scaffold |
+| `docs/plans/00_task_plan.md` | Backend Phase 1 — ETL/LLM/Supabase schema (original) |
+| `docs/plans/01_expanded_silent_briefing_platform_plan.md` | Expanded scope: judicial, CMS, UI, Palantir vision |
+| `docs/plans/02_findings.md` | Research: CMS options, judicial sources, AI orchestration, design |
+| `docs/plans/03_progress.md` | Session log, test results, decisions |
+| `docs/plans/04_foundation_supabase_directus.md` | Foundation: Supabase CLI, Directus, **Clerk JWT + authenticated RLS** (see § Clerk) |
 | `docs/plans/2026-04-21-step-3-phase-3-cohesive-implementation.md` | **Step 3 + Phase 3** cohesive plan (staged retrieval, writer, RLS, Next console) |
 
 **Rules for planning files:**
@@ -338,6 +338,17 @@ RESEARCH_MODEL=sonar-deep-research           # deep research / heavy evidence pa
 # GOOGLE_CIVIC_ELECTIONS_URL=https://www.googleapis.com/civicinfo/v2/elections
 # GOOGLE_CIVIC_DIVISIONS_BY_ADDRESS_URL=https://www.googleapis.com/civicinfo/v2/divisionsByAddress
 # GOOGLE_CIVIC_VOTERINFO_URL=https://www.googleapis.com/civicinfo/v2/voterinfo
+
+# Step 3 retrieval routing (optional; defaults suffice for most runs)
+# RETRIEVAL_STAGE_SPEC_GOP=A,C
+# RETRIEVAL_STAGE_SPEC_DEFAULT=A,B,C
+# RETRIEVAL_STALE_DAYS=30
+
+# Phase 3 Next.js console (when scaffolded) — never put service_role in client bundles
+# NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=<publishable key from supabase status>
+# NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+# CLERK_SECRET_KEY=sk_...
 
 X_API_BEARER_TOKEN=...                       # X API v2 (when available)
 ```
