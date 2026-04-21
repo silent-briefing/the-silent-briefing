@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     retrieval_stage_spec_default: str = Field(default="A,B,C")
     # Days without a retrieval_sonar claim before ``--skip-if-fresh`` treats official as stale; 0 = always stale.
     retrieval_stale_days: int = Field(default=30, ge=0)
+    # Clerk JWT for BFF (`Authorization: Bearer` session token). Issuer + JWKS URL from Clerk dashboard.
+    clerk_jwt_issuer: str = ""
+    clerk_jwks_url: str = ""
 
 
 @lru_cache

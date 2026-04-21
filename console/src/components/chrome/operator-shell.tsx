@@ -1,6 +1,5 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import {
   Archive,
   FileText,
@@ -11,8 +10,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { AuditLogFooter } from "./AuditLogFooter";
+import { OperatorTopBar } from "./operator-top-bar";
 import { Sidebar, type SidebarItem } from "./Sidebar";
-import { TopBar } from "./TopBar";
 
 const operatorNav: SidebarItem[] = [
   { href: "/", label: "Briefing", icon: LayoutDashboard, match: "exact" },
@@ -29,17 +28,16 @@ export function OperatorShell({ children }: { children: ReactNode }) {
       <Sidebar
         brand={{
           title: "The Silent Briefing",
-          subtitle: "Utah political intelligence",
+          subtitle: "Candidate intelligence · Utah",
         }}
         items={operatorNav}
         aria-label="Operator navigation"
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
-        <TopBar
-          title="Morning brief"
-          trailing={<UserButton />}
-        />
-        <main className="min-h-0 flex-1 overflow-y-auto px-6 py-8">{children}</main>
+        <OperatorTopBar />
+        <main className="min-h-0 flex-1 overflow-y-auto px-8 py-10 md:px-14 md:py-12">
+          <div className="mx-auto max-w-[1200px]">{children}</div>
+        </main>
         <AuditLogFooter />
       </div>
     </div>

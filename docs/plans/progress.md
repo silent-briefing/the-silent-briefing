@@ -138,6 +138,32 @@
 
 ---
 
+## 2026-04-21 — Phase A tranche 4 (A.8 BFF auth + operator UI ↔ design kit)
+
+**Phase / tasks:** A.8 Clerk JWT verification + `/v1/admin` namespace; align operator chrome with `design/ui_kits/operator_console` (visual + typography).
+
+**What shipped (A.8):**
+- `backend/briefing/config.py` — `clerk_jwt_issuer`, `clerk_jwks_url`.
+- `backend/briefing/api/deps_auth.py` — `PyJWKClient`, `decode_clerk_jwt`, `require_clerk_user`, `require_role`, `ClerkUser`, `role_at_least` (viewer / operator / admin).
+- `backend/briefing/api/routes/admin/` — `GET /v1/admin/health` → `{ user_id, role }` (admin-only).
+- `backend/briefing/api/main.py` — include admin router.
+- `backend/tests/test_auth_deps.py` — role matrix + FastAPI dependency overrides (403 viewer / 200 admin).
+
+**What shipped (UI — design kit parity):**
+- Sidebar: `--primary-container` + star texture (`operator-chrome.css`), gold right border, shield mark (`/public/branding/shield.svg`), gold active item (left border + tertiary text), footer “Extraction pipeline · Online” pulse.
+- Operator top bar: kit-style search strip + bell/clock placeholders + `UserButton` (hero headline moved to page body).
+- Briefing home: hero kicker + **Newsreader** display headline (sentence case, italic emphasis), lede, 3 stat cards, priority section placeholder — patterned on `OperatorConsole.jsx` / `operator.css`.
+- Root layout: **Inter + Newsreader only** (removed extra Geist variable that fought the design system).
+- Playwright `shell.spec.ts` — assert H1 “Salt Lake briefing” instead of old top-bar “Morning brief”.
+
+**Verification:**
+- `cd backend && uv run pytest -q` → 53 passed.
+- `cd console && bun run build && bun run test && bun run lint` → green.
+
+**Next session:** A.9 React Query + BFF client (`lib/bff/client.ts`) + audit stub; optional real JWKS integration test once Clerk env is set locally.
+
+---
+
 ## Template for future entries
 
 ```markdown

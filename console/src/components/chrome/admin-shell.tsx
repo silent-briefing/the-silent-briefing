@@ -18,7 +18,7 @@ import {
 import type { ReactNode } from "react";
 import { AuditLogFooter } from "./AuditLogFooter";
 import { Sidebar, type SidebarItem } from "./Sidebar";
-import { TopBar } from "./TopBar";
+import { AdminTopBar } from "./TopBar";
 
 /** Admin concern labels — full workflows land in Phase C; nav is structural only. */
 const adminNav: SidebarItem[] = [
@@ -45,7 +45,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         aria-label="Admin navigation"
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
-        <TopBar
+        <AdminTopBar
           badge="ADMIN"
           title="Control room"
           trailing={<UserButton />}

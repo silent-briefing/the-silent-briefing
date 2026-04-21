@@ -39,11 +39,13 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "cryptography" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "lxml" },
     { name = "playwright" },
     { name = "pydantic-settings" },
+    { name = "pyjwt" },
     { name = "pypdf" },
     { name = "pytest" },
     { name = "respx" },
@@ -59,11 +61,13 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
+    { name = "cryptography", specifier = ">=46.0.7" },
     { name = "fastapi", specifier = ">=0.136.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lxml", specifier = ">=6.1.0" },
     { name = "playwright", specifier = ">=1.58.0" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
+    { name = "pyjwt", specifier = ">=2.12.1" },
     { name = "pypdf", specifier = ">=6.10.2" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "respx", specifier = ">=0.23.1" },

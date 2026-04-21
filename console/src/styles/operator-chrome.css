@@ -1,0 +1,11 @@
+/* Mirrors design/ui_kits/operator_console/operator.css — sidebar texture + glass top bar */
+.sb-sidebar-pattern {
+  background-color: var(--primary-container);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><path d='M24 4 L26 18 L40 18 L28.5 26 L33 40 L24 32 L15 40 L19.5 26 L8 18 L22 18 Z' fill='%23d4af37' fill-opacity='0.035'/></svg>");
+  background-size: 48px 48px;
+}
+
+.sb-topbar-glass {
+  background: color-mix(in oklab, var(--surface-container-low) 88%, transparent);
+  backdrop-filter: blur(10px);
+}

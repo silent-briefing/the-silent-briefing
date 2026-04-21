@@ -20,7 +20,9 @@ test.describe("auth gate + chrome", () => {
       await expect(
         page.getByRole("navigation", { name: /operator navigation/i }),
       ).toBeVisible();
-      await expect(page.getByRole("heading", { name: /morning brief/i })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: /Salt Lake briefing/i }),
+      ).toBeVisible();
     }
   });
 
