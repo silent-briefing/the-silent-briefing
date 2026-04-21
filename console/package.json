@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "types:db": "node ./scripts/gen-supabase-types.mjs",
+    "check:secrets": "node ./scripts/check-no-service-role.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.2.3",

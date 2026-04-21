@@ -92,6 +92,27 @@
 
 ---
 
+## 2026-04-21 — Phase A tranche 2 (A.4–A.5) + Next.js 16 `proxy` + dev stability
+
+**Phase / tasks:** A.4 Supabase clients + whoami + no-service-role guard + `types:db`; A.5 GUI tables migration + psycopg RLS tests; fix **`middleware` → `proxy`** deprecation; mitigate **Turbopack panic** + **LAN dev** warnings.
+
+**What shipped:**
+- **`src/middleware.ts` deleted** → **`src/proxy.ts`** (same `clerkMiddleware` logic — Next.js 16 convention rename).
+- **`package.json`:** `"dev": "next dev --webpack"`; optional `"dev:turbo": "next dev --turbopack"`.
+- **`next.config.ts`:** `allowedDevOrigins` includes `192.168.1.211` + env `NEXT_PUBLIC_ALLOWED_DEV_ORIGINS` (comma-separated).
+- **Supabase:** `createServerSupabaseClient()` + `useSupabaseBrowser()` (Clerk `supabase` JWT template); `GET /api/whoami` smoke; `scripts/check-no-service-role.mjs`, `scripts/gen-supabase-types.mjs`, `bun run types:db` / `check:secrets`.
+- **DB:** `supabase/migrations/20260423120000_gui_support_tables.sql` — `admin_audit_log`, `user_saved_views`, `alerts`, `settings`, `feature_flags` + RLS.
+- **Backend:** `uv add psycopg`; `tests/test_rls_gui_tables.py` (4 tests against local Postgres when reachable).
+
+**Verification:**
+- `.\scripts\dev-db-migrate.ps1` → migration applied.
+- `uv run pytest tests/test_rls_gui_tables.py` → 4 passed.
+- `cd console && bun run build && bun run check:secrets && bun run test && bun run lint` → green.
+
+**Next session:** A.6 app shell + route groups.
+
+---
+
 ## Template for future entries
 
 ```markdown

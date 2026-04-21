@@ -23,3 +23,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["briefing"]
+
+[dependency-groups]
+dev = [
+    "psycopg[binary]>=3.2",
+]

@@ -59,7 +59,7 @@
 
 | Phase | Status | Owner | Depends on | Gate to next |
 |---|---|---|---|---|
-| **A — Console foundation** | in_progress | A.1–A.3 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists) | Clerk sign-in works; `/` loads design tokens; role middleware blocks `/admin` for non-admins; CI green |
+| **A — Console foundation** | in_progress | A.1–A.5 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists), GUI tables migration | Clerk sign-in works; `/` loads design tokens; `proxy.ts` + Supabase clients + GUI support tables; CI green |
 | **B — Operator console** | pending | — | A | All 10 operator surfaces shippable; Playwright smoke green |
 | **C — Admin console** | pending | — | A | All 10 admin concerns CRUD-complete; mutations audit-logged; BFF tests green |
 | **D — Directus sunset** | pending | — | C | Parity audit signed off; Directus container stopped; docs updated |

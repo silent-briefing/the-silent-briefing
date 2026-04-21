@@ -40,7 +40,7 @@ bun install
 bun run dev                        # http://localhost:3000
 ```
 
-- **Tests:** `bun run test` (Vitest). **Lint:** `bun run lint` (ESLint 9 + `eslint-config-next`).
+- **Tests:** `bun run test` (Vitest). **Lint:** `bun run lint` (ESLint 9 + `eslint-config-next`). **Dev server** uses **webpack** (`bun run dev`) by default to avoid Turbopack instability with Clerk on some Windows hosts; use `bun run dev:turbo` if you prefer Turbopack.
 - **Public routes:** `/sign-in`, `/sign-up`, `GET /api/health`. All other routes require Clerk; `/admin/*` requires `public_metadata.role === "admin"` (see `CLAUDE.md` § Authentication).
 
 ## Local development
