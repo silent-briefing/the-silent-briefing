@@ -21,6 +21,11 @@ build/
 # Node / Bun (commit lockfile: bun.lockb or package-lock.json)
 node_modules/
 
+# Next.js operator console (console/)
+console/.next/
+console/node_modules/
+console/.env.local
+
 # Supabase local
 supabase/.branches/
 supabase/.temp/

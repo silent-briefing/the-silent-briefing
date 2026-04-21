@@ -10,7 +10,7 @@ Palantir-style political intelligence for Utah: Supabase (Postgres + RLS + pgvec
 | **Docker**                                                | Supabase local stack + Directus container. On **macOS**, Docker Desktop or Colima is typical.       |
 | **Supabase CLI**                                          | `brew install supabase/tap/supabase` (Mac) or [install docs](https://supabase.com/docs/guides/cli). |
 | **Python 3.12+** and **[uv](https://docs.astral.sh/uv/)** | Backend only: `curl -LsSf https://astral.sh/uv/install.sh | sh` (Mac/Linux).                        |
-| **bun** (optional, for future console)                    | [bun.sh](https://bun.sh)                                                                            |
+| **bun**                                                 | Operator console (`console/`) — install from [bun.sh](https://bun.sh)                                |
 
 
 First-time **macOS/Linux**: make scripts executable once:
@@ -28,6 +28,20 @@ chmod +x scripts/*.sh cms/scripts/*.sh
    **Important:** Directus reads `**cms/.env` only** (via `docker-compose.yml`). Do not put Directus `**KEY`** in `.env.local` — the container will not see it.
 3. **Postgres host from Directus**
   Local Supabase DB is `127.0.0.1:54322`. Inside Docker, use `**DB_HOST=host.docker.internal`** (as in the example) so Directus reaches the host Postgres.
+
+## Operator console (Next.js)
+
+The app lives in **`console/`** (package name `silent-briefing-console`). `create-next-app` cannot use the folder name `console` as the npm package name (reserved), so the **directory** is `console/` and the **package** is named `silent-briefing-console`.
+
+```bash
+cd console
+cp .env.local.example .env.local   # add Clerk + Supabase keys from Clerk dashboard and supabase status
+bun install
+bun run dev                        # http://localhost:3000
+```
+
+- **Tests:** `bun run test` (Vitest). **Lint:** `bun run lint` (ESLint 9 + `eslint-config-next`).
+- **Public routes:** `/sign-in`, `/sign-up`, `GET /api/health`. All other routes require Clerk; `/admin/*` requires `public_metadata.role === "admin"` (see `CLAUDE.md` § Authentication).
 
 ## Local development
 

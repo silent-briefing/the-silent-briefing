@@ -1,0 +1,2 @@
+/* Re-export repo design tokens — single source of truth in /design */
+@import "../../../design/colors_and_type.css";

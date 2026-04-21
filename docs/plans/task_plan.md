@@ -59,12 +59,24 @@
 
 | Phase | Status | Owner | Depends on | Gate to next |
 |---|---|---|---|---|
-| **A — Console foundation** | pending | — | Clerk JWT template (exists), `authenticated` RLS tranche (exists) | Clerk sign-in works; `/` loads design tokens; role middleware blocks `/admin` for non-admins; CI green |
+| **A — Console foundation** | in_progress | A.1–A.3 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists) | Clerk sign-in works; `/` loads design tokens; role middleware blocks `/admin` for non-admins; CI green |
 | **B — Operator console** | pending | — | A | All 10 operator surfaces shippable; Playwright smoke green |
 | **C — Admin console** | pending | — | A | All 10 admin concerns CRUD-complete; mutations audit-logged; BFF tests green |
 | **D — Directus sunset** | pending | — | C | Parity audit signed off; Directus container stopped; docs updated |
 
 B and C may run in parallel as two subagent streams once A ships.
+
+## Bill Programme Tracker (parallel to GUI)
+
+Full plan: `docs/plans/2026-04-20-bill-summarization.md`.
+
+| Phase | Status | Depends on | Gate to next |
+|---|---|---|---|
+| **Bill P1 — Backend pipeline** | pending | nothing (standalone) | Ingestion + map + section + rollup + adversarial + synthesis produce a valid `bill_summaries` row for one real Utah bill end-to-end; chunk + cite integrity checks pass; pytest green |
+| **Bill P2 — Admin workflow** | pending | Bill P1 + GUI Phase A exit gate | Admin can trigger ingest, review + edit + publish/reject a summary; every mutation audit-logged; Playwright green |
+| **Bill P3 — Operator surfaces** | pending | Bill P2 + GUI Phase B.2 primitives | `/bills` hub + detail split-view + version diff + Ask-this-bill + annotations + PDF export + sponsor dossier tab all shipping; Playwright + axe + Lighthouse green |
+
+Recommended sequencing: Bill P1 runs **in parallel with GUI Phase A** (no shared files). Bill P2 starts once both Bill P1 and GUI Phase A exit gates clear. Bill P3 starts once Bill P2 and GUI Phase B.2 (operator primitives) are both green.
 
 ---
 

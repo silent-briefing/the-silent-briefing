@@ -197,7 +197,8 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 CLERK_SECRET_KEY=sk_...
 ```
 
-- Protect operator console routes with Clerk middleware (`authMiddleware`).
+- **Operator console (`console/`):** use **`clerkMiddleware`** (not legacy `authMiddleware`). Enable **Organizations** in the Clerk Dashboard for multi-tenant orgs.
+- **App roles (three):** `admin`, `operator`, `viewer` — stored on the Clerk user as **`public_metadata.role`**. Middleware treats a missing role as **`viewer`** for route access; `/admin/*` requires **`admin`**. JWT template **`supabase`** should pass `role`, `org_id`, `sub`, and `aud: "authenticated"` per `docs/plans/04_foundation_supabase_directus.md`.
 - Directus admin protected separately (Directus RBAC — do not expose to Clerk users directly unless building custom integration).
 - JWT from Clerk can be validated server-side to scope Supabase RLS queries.
 

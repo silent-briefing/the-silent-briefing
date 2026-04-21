@@ -35,6 +35,63 @@
 
 ---
 
+## 2026-04-20 — Bill summarization programme added
+
+**What happened:**
+- User requested an AI summary feature for bills with chunking, source-page/line linkage, version tracking, and anti-hallucination guarantees.
+- Scoped with user: Utah Legislature only (v1), all versions tracked, hybrid citation (atomic → chunk-level, summaries → section-level), human review required on every bill, scheduled scrape.
+
+**Decisions (delegated to me, recorded in the new plan):**
+1. Separate `bill_chunks` schema (not `rag_chunks` reuse) — bills have structure opinions don't (sections, line ranges, version linkage for diffs).
+2. Five-stage LLM pipeline: **map → section → rollup → adversarial → synthesis**, with forced claim citation at every stage, substring-verified quotes, cite-integrity retry, groundedness score at every stage. Anti-hallucination in data, not just in prompts.
+
+**Files created:**
+- `docs/plans/2026-04-20-bill-summarization.md` — full plan, 22 tasks across 3 phases
+
+**Files modified:**
+- `docs/plans/README.md` — added the bill plan as active; updated the plan-graph diagram
+- `docs/plans/task_plan.md` — added "Bill Programme Tracker" parallel to the GUI phase tracker
+
+**Files NOT modified** (per user's earlier "don't break existing plans"): every other plan, including the GUI A/B/C/D phase plans. The bill plan cross-references them without editing them.
+
+**Errors encountered:** none (planning session).
+
+**Next session:** choose execution mode for Bill P1 (recommend subagent-driven for backend DB-schema tasks). Bill P1 can run in parallel with GUI Phase A — no file conflicts.
+
+---
+
+## 2026-04-21 — Phase A tranche 1 (A.1–A.3) subagent-driven execution
+
+**Phase / tasks:** A.1 scaffold, A.2 design tokens + Tailwind `@theme`, A.3 Clerk Organizations + three-role middleware + `RoleGate`.
+
+**What shipped:**
+- `console/` — Next.js **16.2.4** (current `create-next-app` default; plan text says 15 — noted below), App Router, Tailwind v4, `src/` layout, Bun lockfile.
+- Dependencies per plan: `@clerk/nextjs`, `@supabase/ssr`, `@supabase/supabase-js`, `@tanstack/react-query`, `@tanstack/react-table`, `zod`, `lucide-react`, `@xyflow/react`; dev: Vitest 4, Playwright, `@axe-core/playwright`, `@vitejs/plugin-react`, `jsdom`.
+- **Naming:** npm forbids package name `console`; scaffold used `tsb-operator-console` then renamed folder to `console/`; `package.json` name `silent-briefing-console`.
+- Design: `src/styles/tokens.css` re-exports `design/colors_and_type.css`; `globals.css` `@theme` maps palette + radii + shadows + font stacks; `next/font` Newsreader + Inter; home page verifies serif headline + cream surface.
+- Auth: `src/middleware.ts` — public `/sign-in`, `/sign-up`, `GET /api/health`; signed-in users default **viewer** when `public_metadata.role` absent; `/admin/*` requires **admin**; denial → `/?denied=admin-required` + structured `role_denied` console.error.
+- `src/lib/auth/roles.ts`, `guards.ts`, `RoleGate.tsx`, `roles.test.ts`, `tokens.test.ts` (reads `design/colors_and_type.css` for `--primary: #000f22`).
+- Root `.gitignore` — `console/.next`, `console/node_modules`, `console/.env.local`; `console/.env.local.example`; `README.md` console section; `CLAUDE.md` § Authentication updated.
+
+**Verification:**
+- `cd console && bun run build` → success (CSS warning: Google Fonts `@import` inside imported design file order — non-fatal).
+- `cd console && bun run test` → 13 passed.
+- `cd console && bun run lint` → success (required `zod@4` for `eslint-config-next`).
+
+**Errors / notes:**
+| Note | Resolution |
+|------|------------|
+| `create-next-app` rejects project name `console` (npm reserved) | Scaffold to `tsb-operator-console`, rename dir to `console/`. |
+| Next 15 vs 16 | Scaffold installs Next 16; aligned with current template. Downgrade to 15 only if CI/product requires it. |
+| CSS `@import` order warning | Accept for now; optional follow-up: split `design/colors_and_type.css` or drop duplicate font import when self-hosting WOFF2. |
+
+**Status updates:**
+- Phase A tasks **A.1–A.3** implemented in repo; **A.4+** not started (Supabase clients, migrations, shell, shadcn, BFF admin, React Query, CI).
+
+**Next session:** A.4 Supabase browser/server clients + service-role grep guard; A.5 migrations.
+
+---
+
 ## Template for future entries
 
 ```markdown
