@@ -6,7 +6,7 @@ Next.js App Router + Clerk + Supabase (`@supabase/ssr` + Clerk JWT). Package nam
 
 ```bash
 bun install
-cp .env.local.example .env.local   # Clerk + Supabase anon URL/key
+cp .env.local.example .env.local   # Clerk + Supabase + BFF base URL
 bun run dev                        # webpack bundler — avoids Turbopack panics with Clerk on some Windows setups
 ```
 
@@ -14,6 +14,7 @@ bun run dev                        # webpack bundler — avoids Turbopack panics
 - **LAN / phone testing:** add your machine IP in `next.config.ts` `allowedDevOrigins` or set `NEXT_PUBLIC_ALLOWED_DEV_ORIGINS` (comma-separated) and restart dev.
 - **DB types:** with local Supabase running, `bun run types:db` regenerates `src/lib/supabase/types.ts`.
 - **Guard:** `bun run check:secrets` ensures `console/src` never references `service_role`.
+- **BFF:** `NEXT_PUBLIC_BFF_BASE_URL` (e.g. `http://127.0.0.1:8000`) — browser calls FastAPI with Clerk `Authorization: Bearer` via `src/lib/bff/client.ts`.
 
 **E2E:** With dev server up (`bun run dev` on port 3000) and `.env.local` Clerk keys: `bun run test:e2e`.
 

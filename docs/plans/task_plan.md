@@ -59,7 +59,7 @@
 
 | Phase | Status | Owner | Depends on | Gate to next |
 |---|---|---|---|---|
-| **A — Console foundation** | in_progress | A.1–A.8 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists), GUI tables migration | Clerk sign-in works; `/` loads design tokens; `proxy.ts` + Supabase clients + GUI support tables + app shell + shadcn primitives + BFF `/v1/admin/health`; CI green |
+| **A — Console foundation** | in_progress | A.1–A.9 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists), GUI tables migration | Clerk sign-in works; `/` loads design tokens; `proxy.ts` + Supabase clients + GUI support tables + app shell + shadcn primitives + BFF client + `/v1/admin/health`; CI green |
 | **B — Operator console** | pending | — | A | All 10 operator surfaces shippable; Playwright smoke green |
 | **C — Admin console** | pending | — | A | All 10 admin concerns CRUD-complete; mutations audit-logged; BFF tests green |
 | **D — Directus sunset** | pending | — | C | Parity audit signed off; Directus container stopped; docs updated |
@@ -122,6 +122,7 @@ Clerk Organizations enabled; `org:admin` Clerk system role maps to app `admin`; 
 | 2026-04-20 | Master plan written; phases A/B/C/D scoped; legacy plans marked superseded in README |
 | 2026-04-21 | Phase A.6–A.7: operator/admin shell + re-themed shadcn primitives + dev `/_/primitives` storyboard |
 | 2026-04-21 | Phase A.8: `/v1/admin/health` + Clerk JWT deps; operator UI aligned to `design/ui_kits/operator_console` |
+| 2026-04-21 | Phase A.9: `QueryProvider` + `bffJson` (Zod) + audit stub; `NEXT_PUBLIC_BFF_BASE_URL` |
 
 ---
 

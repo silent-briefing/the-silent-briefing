@@ -164,6 +164,25 @@
 
 ---
 
+## 2026-04-21 — Phase A tranche 5 (A.9 React Query + BFF client + audit stub)
+
+**Phase / tasks:** A.9 — `QueryClientProvider` module, Clerk-authenticated BFF `fetch` + Zod, audit helper stub, layout wiring.
+
+**What shipped:**
+- `console/src/lib/query/provider.tsx` — `QueryProvider` (same defaults as before: 60s stale, no refetch on focus).
+- `console/src/lib/bff/client.ts` — `bffJson` with `Authorization: Bearer`, `NEXT_PUBLIC_BFF_BASE_URL`, required Zod schema, `BffHttpError` on non-OK.
+- `console/src/lib/bff/schemas/admin.ts` — `adminHealthResponseSchema` for `GET /v1/admin/health`.
+- `console/src/lib/bff/audit.ts` — `recordAdminAudit` Phase A stub (validates `AuditDraft` only; Phase C adds POST).
+- `console/src/app/layout.tsx` — `<QueryProvider>` wraps `<AppProviders>`; theme/toaster unchanged inside `AppProviders`.
+- `console/.env.local.example` + `README.md` — `NEXT_PUBLIC_BFF_BASE_URL`.
+- Tests: `bff/client.test.ts`, `bff/audit.test.ts` (29 Vitest tests total).
+
+**Verification:** `cd console && bun run test && bun run lint && bun run build` → green.
+
+**Next session:** A.10 `gui-ci.yml` + root README CI section.
+
+---
+
 ## Template for future entries
 
 ```markdown
