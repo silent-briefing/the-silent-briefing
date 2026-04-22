@@ -272,6 +272,7 @@ For every final dossier/brief (judicial especially):
 - **UI stack:** Tailwind v4 **`@theme`** wired to `design/colors_and_type.css` via `console/src/styles/tokens.css`; **shadcn/Radix** primitives in `console/src/components/ui/` are **re-themed** (no default gray/blue chrome). Operator chrome aligns with `design/ui_kits/operator_console`.
 - **Client data layer:** React Query provider + `bffJson` fetch helper with Zod at trust boundaries (Phase A.9).
 - **CI:** `.github/workflows/gui-ci.yml` — typecheck, lint, Vitest, production build, Playwright (incl. axe on key routes), Lighthouse CI (currently non-blocking), backend `pytest`.
+- **Phase B.12 — Saved views & alerts:** Routes `/saved` and `/alerts`, sidebar entries, and **`AlertsBell`** in the operator top bar (unread count + preview list). **`user_saved_views`** rows scope by user and workspace (`organization.id` or `personal_${userId}`); **`alerts`** reads/writes require the active Clerk org to match row `org_id` under RLS. Workers insert alerts via **`backend/briefing/services/alerts/dispatcher.py`** only when **`ALERTS_DEFAULT_ORG_ID`** (Clerk org id), **`SUPABASE_URL`**, and **`SUPABASE_SERVICE_ROLE_KEY`** are set.
 
 **Palantir UX patterns to implement:**
 - Supreme Court main page: justices grid with key metrics + latest correlations + news feed teaser.

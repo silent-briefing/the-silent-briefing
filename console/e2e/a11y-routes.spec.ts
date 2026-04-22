@@ -2,7 +2,17 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 /** Top-level shells (sign-in redirect or chrome) — fail on new critical axe issues only. */
-const routes = ["/", "/judicial", "/judicial/supreme-court", "/admin"] as const;
+const routes = [
+  "/",
+  "/judicial",
+  "/judicial/supreme-court",
+  "/officials",
+  "/search",
+  "/saved",
+  "/alerts",
+  "/compare",
+  "/admin",
+] as const;
 
 test.describe("axe — top routes", () => {
   for (const path of routes) {
