@@ -50,7 +50,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
           title="Control room"
           trailing={<UserButton />}
         />
-        <main className="min-h-0 flex-1 overflow-y-auto px-6 py-8">{children}</main>
+        <main
+          id="site-main"
+          tabIndex={-1}
+          className="min-h-0 flex-1 overflow-y-auto px-6 py-8 outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
+        >
+          {children}
+        </main>
         <AuditLogFooter />
       </div>
     </div>

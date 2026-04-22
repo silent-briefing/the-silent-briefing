@@ -135,7 +135,6 @@ jobs:
   console-lighthouse:
     name: console-lighthouse
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: console

@@ -2,7 +2,7 @@
 
 exports[`operator primitives snapshots > Card 1`] = `
 <div
-  class="group relative rounded-lg bg-card text-card-foreground shadow-sm hover:shadow-md border-l-2 border-l-transparent transition-[border-color] duration-200 hover:border-l-tertiary p-3"
+  class="group relative rounded-lg bg-card text-card-foreground shadow-sm hover:shadow-md border-l-2 border-l-transparent transition-[border-color] duration-200 hover:border-l-tertiary motion-reduce:transition-none p-3"
 >
   Child
 </div>
@@ -10,7 +10,7 @@ exports[`operator primitives snapshots > Card 1`] = `
 
 exports[`operator primitives snapshots > Card featured 1`] = `
 <div
-  class="group relative rounded-lg bg-card text-card-foreground shadow-sm hover:shadow-md border-l-2 border-l-transparent transition-[border-color] duration-200 hover:border-l-tertiary border-t-2 border-t-tertiary p-3"
+  class="group relative rounded-lg bg-card text-card-foreground shadow-sm hover:shadow-md border-l-2 border-l-transparent transition-[border-color] duration-200 hover:border-l-tertiary motion-reduce:transition-none border-t-2 border-t-tertiary p-3"
 >
   Featured
 </div>

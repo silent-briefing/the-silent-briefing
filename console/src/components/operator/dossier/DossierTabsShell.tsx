@@ -39,8 +39,16 @@ export function DossierTabsShell({
 }: DossierTabsShellProps) {
   const [tab, setTab] = React.useState("overview");
 
+  const onTabChange = React.useCallback((v: string) => {
+    const next = String(v);
+    setTab(next);
+    requestAnimationFrame(() => {
+      document.getElementById(`dossier-panel-${next}`)?.focus();
+    });
+  }, []);
+
   return (
-    <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className={cn("w-full", className)}>
+    <Tabs value={tab} onValueChange={onTabChange} className={cn("w-full", className)}>
       <TabsList
         variant="line"
         className="mb-8 h-auto w-full min-w-0 flex-wrap justify-start gap-x-6 gap-y-1 border-b border-[rgba(212,175,55,0.2)] bg-transparent p-0"
@@ -70,28 +78,64 @@ export function DossierTabsShell({
           Timeline
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="overview" className="mt-0 max-w-5xl">
+      <TabsContent
+        value="overview"
+        id="dossier-panel-overview"
+        tabIndex={-1}
+        className="mt-0 max-w-5xl outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
+      >
         <section aria-label="Dossier overview">
           <OverviewPanel official={official} jurisdictionName={jurisdictionName} />
         </section>
       </TabsContent>
-      <TabsContent value="claims" className="mt-0 max-w-5xl">
+      <TabsContent
+        value="claims"
+        id="dossier-panel-claims"
+        tabIndex={-1}
+        className="mt-0 max-w-5xl outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
+      >
         <section aria-label="Dossier claims">
           <ClaimsPanel officialId={officialId} fetchEnabled={tab === "claims"} />
         </section>
       </TabsContent>
-      <TabsContent value="adversarial" className="mt-0 max-w-5xl">
+      <TabsContent
+        value="adversarial"
+        id="dossier-panel-adversarial"
+        tabIndex={-1}
+        className="mt-0 max-w-5xl outline-none"
+      >
         <section aria-label="Adversarial review">
           <AdversarialPanel officialId={officialId} fetchEnabled={tab === "adversarial"} />
         </section>
       </TabsContent>
-      <TabsContent value="graph" className="mt-0 max-w-5xl">
-        <GraphPanel />
+      <TabsContent
+        value="graph"
+        id="dossier-panel-graph"
+        tabIndex={-1}
+        className="mt-0 max-w-5xl outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
+      >
+        <GraphPanel
+          officialId={officialId}
+          entityId={official.entity_id ?? null}
+          fetchEnabled={tab === "graph"}
+        />
       </TabsContent>
-      <TabsContent value="feed" className="mt-0 max-w-5xl">
-        <FeedPanel />
+      <TabsContent
+        value="feed"
+        id="dossier-panel-feed"
+        tabIndex={-1}
+        className="mt-0 max-w-5xl outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
+      >
+        <section aria-label="News and feeds">
+          <FeedPanel officialId={officialId} fetchEnabled={tab === "feed"} />
+        </section>
       </TabsContent>
-      <TabsContent value="timeline" className="mt-0 max-w-5xl">
+      <TabsContent
+        value="timeline"
+        id="dossier-panel-timeline"
+        tabIndex={-1}
+        className="mt-0 max-w-5xl outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
+      >
         <section aria-label="Dossier timeline">
           <TimelinePanel officialId={officialId} fetchEnabled={tab === "timeline"} />
         </section>

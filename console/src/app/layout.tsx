@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
+import { SkipToContent } from "@/components/chrome/skip-to-content";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 import { QueryProvider } from "@/lib/query/provider";
@@ -35,6 +36,7 @@ export default function RootLayout({
         className={cn("h-full", "antialiased", newsreader.variable, inter.variable, "font-sans")}
       >
         <body className="flex min-h-screen flex-col bg-surface font-sans text-[var(--fg-2)]">
+          <SkipToContent />
           <QueryProvider>
             <AppProviders>
               <div className="flex min-h-0 flex-1 flex-col">{children}</div>

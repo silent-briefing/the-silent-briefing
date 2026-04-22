@@ -50,7 +50,11 @@ export function OperatorShell({ children }: { children: React.ReactNode }) {
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
         <OperatorTopBar onOpenSearch={openSearch} />
-        <main className="min-h-0 flex-1 overflow-y-auto px-8 py-10 md:px-14 md:py-12">
+        <main
+          id="site-main"
+          tabIndex={-1}
+          className="min-h-0 flex-1 overflow-y-auto px-8 py-10 outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4 md:px-14 md:py-12"
+        >
           <div className="mx-auto max-w-[1200px]">{children}</div>
         </main>
         <AuditLogFooter />

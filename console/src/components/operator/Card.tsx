@@ -12,8 +12,8 @@ export function Card({ className, featured, children, ...props }: CardProps) {
     <div
       className={cn(
         "group relative rounded-lg bg-card text-card-foreground",
-        "shadow-sm transition-shadow duration-200 hover:shadow-md",
-        "border-l-2 border-l-transparent pl-3 transition-[border-color] duration-200 hover:border-l-tertiary",
+        "shadow-sm transition-shadow duration-200 hover:shadow-md motion-reduce:transition-none",
+        "border-l-2 border-l-transparent pl-3 transition-[border-color] duration-200 hover:border-l-tertiary motion-reduce:transition-none",
         featured && "border-t-2 border-t-tertiary pt-3",
         className,
       )}

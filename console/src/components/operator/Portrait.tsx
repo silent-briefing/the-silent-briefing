@@ -31,7 +31,7 @@ export function Portrait({ src, alt, name, size = 48, className }: PortraitProps
         width={size}
         height={size}
         className={cn(
-          "rounded-full object-cover grayscale transition-[filter] duration-[600ms] ease-in-out hover:grayscale-0",
+          "rounded-full object-cover grayscale transition-[filter] duration-[600ms] ease-in-out hover:grayscale-0 motion-reduce:transition-none motion-reduce:hover:grayscale",
           className,
         )}
         style={dim}
