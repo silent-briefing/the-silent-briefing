@@ -9,6 +9,7 @@
 **Tech Stack:** inherits Phase A. Adds: `@xyflow/react` for the graph, `@tanstack/react-virtual` for long officials lists, `react-hook-form` for search filter forms.
 
 **Read first:**
+
 - `docs/plans/task_plan.md`, `docs/plans/findings.md`
 - `design/README.md` §§ Content Fundamentals, Visual Foundations, Cards, Iconography — internalize voice + No-Line Rule
 - `design/ui_kits/operator_console/OperatorConsole.jsx` — **reference only** (do not copy; transcribe patterns)
@@ -21,10 +22,12 @@
 ## Task B.1 — RLS tranche extension for operator surfaces
 
 **Files:**
+
 - Create: `supabase/migrations/<timestamp>_operator_rls.sql`
 - Test: `backend/tests/test_rls_operator.py`
 
 **Additions:**
+
 - `officials`: already readable by authenticated (U3.5). Verify + add index on `(jurisdiction_id, office_type, is_current)`.
 - `jurisdictions`: authenticated SELECT.
 - `dossier_claims`: authenticated SELECT where `pipeline_stage IN ('writer_sonar','human_edit')` AND a `published` flag (add column if missing: `published boolean default false`). `retrieval_sonar` + `critique_sonar` stay internal.
@@ -45,6 +48,7 @@
 ## Task B.2 — Shared operator primitives
 
 **Files:**
+
 - Create: `console/src/components/operator/Card.tsx` (house card per design — `--radius-lg`, `--shadow-sm` rest, `--shadow-md` hover, optional 2px gold top border for featured, hover gold left pinstripe animation)
 - Create: `console/src/components/operator/SectionHeader.tsx` (Newsreader serif, sentence case)
 - Create: `console/src/components/operator/MetaLabel.tsx` (Inter 12px UPPERCASE 0.2em tracked — the dossier metadata label primitive)
@@ -68,6 +72,7 @@
 ## Task B.3 — Data access layer for operator screens
 
 **Files:**
+
 - Create: `console/src/lib/queries/officials.ts` (`listSupremeCourt`, `listAppellate`, `listByJurisdiction`, `getBySlug`)
 - Create: `console/src/lib/queries/dossier.ts` (`getDossierClaims`, `getAdversarialFlags`, `getTimeline`)
 - Create: `console/src/lib/queries/graph.ts` (`getAcceptedEdgesForEntity`)
@@ -86,6 +91,7 @@
 ## Task B.4 — Briefing home (`/`)
 
 **Files:**
+
 - Modify: `console/src/app/(operator)/page.tsx`
 - Create: `console/src/components/operator/briefing/BriefingHero.tsx`
 - Create: `console/src/components/operator/briefing/StatsStrip.tsx`
@@ -102,9 +108,10 @@
 
 ---
 
-## Task B.5 — Judicial Watch (`/judicial/*`)
+## Task B.5 — Judicial Watch (`/judicial/`*)
 
 **Files:**
+
 - Create: `console/src/app/(operator)/judicial/page.tsx` — Judicial Watch landing (links to Supreme Court, Court of Appeals, District Courts)
 - Create: `console/src/app/(operator)/judicial/supreme-court/page.tsx`
 - Create: `console/src/app/(operator)/judicial/court-of-appeals/page.tsx`
@@ -127,6 +134,7 @@
 ## Task B.6 — Full Dossier (`/judicial/[slug]`, `/officials/[slug]`)
 
 **Files:**
+
 - Create: `console/src/app/(operator)/judicial/[slug]/page.tsx`
 - Create: `console/src/app/(operator)/officials/[slug]/page.tsx` — shares the dossier layout component
 - Create: `console/src/components/operator/dossier/DossierHeader.tsx` (portrait, name, office_type, jurisdiction, retention / next election, subject_alignment, share/export menu)
@@ -155,6 +163,7 @@
 ## Task B.7 — Entity Graph (React Flow)
 
 **Files:**
+
 - Create: `console/src/components/operator/graph/EntityGraph.tsx`
 - Create: `console/src/components/operator/graph/nodeTypes.tsx` (custom nodes per entity type — judge, bill, opinion, issue, org)
 - Create: `console/src/components/operator/graph/edgeTypes.tsx` (strength encoded as stroke width; gold for strong links per design)
@@ -177,6 +186,7 @@
 ## Task B.8 — Officials Hub (`/officials`)
 
 **Files:**
+
 - Create: `console/src/app/(operator)/officials/page.tsx`
 - Create: `console/src/components/operator/officials/OfficialsFilters.tsx` (jurisdiction ladder, office_type, party, subject_alignment, is_current)
 - Create: `console/src/components/operator/officials/OfficialsTable.tsx` (virtualized; row hover = left gold pinstripe per design)
@@ -194,6 +204,7 @@
 ## Task B.9 — Comparison Matrix (`/compare`)
 
 **Files:**
+
 - Create: `console/src/app/(operator)/compare/page.tsx`
 - Create: `console/src/components/operator/compare/ComparePicker.tsx` (Command palette to pick 2–4 officials)
 - Create: `console/src/components/operator/compare/CompareMatrix.tsx` (asymmetric 1/4 + 3×1/4 grid per design ComparisonScreen)
@@ -209,6 +220,7 @@
 ## Task B.10 — Global Search (`/search`)
 
 **Files:**
+
 - Create: `console/src/app/(operator)/search/page.tsx`
 - Create: `console/src/lib/search/lexical.ts` (Supabase full-text across `officials.full_name`, `bills.title`, `opinions.title`, `media_coverage.headline`)
 - Create: `console/src/lib/search/semantic.ts` (server action → BFF `POST /v1/search/semantic` wrapping `match_rag_chunks_public`)
@@ -228,6 +240,7 @@
 ## Task B.11 — Feeds (X + Perplexity) — BFF + Dossier tab
 
 **Files:**
+
 - Create: `backend/briefing/services/feeds/feed_service.py` — `FeedService` with `XSource`, `PerplexityNewsSource`, deterministic order (latest first), dedupe by URL/post_id
 - Create: `backend/briefing/api/routes/feeds.py` — `GET /v1/feeds/{official_id}`
 - Create: `backend/tests/test_feed_service.py` (respx mocks; no live calls)
@@ -244,6 +257,7 @@
 ## Task B.12 — Saved Views + Alerts + Notifications
 
 **Files:**
+
 - Create: `console/src/app/(operator)/saved/page.tsx` (list personal saved views + bookmarked dossiers)
 - Create: `console/src/components/operator/alerts/AlertsBell.tsx` (top-bar bell; unread count; dropdown list from `alerts` table)
 - Create: `console/src/app/(operator)/alerts/page.tsx` (full history)
@@ -261,6 +275,7 @@
 ## Task B.13 — Accessibility + performance sweep
 
 **Files:**
+
 - Modify: every top-level route — add skip-link, landmarks, focus management on tab change
 - Modify: `gui-ci.yml` — tighten axe/Lighthouse budgets from Phase A.7
 
@@ -277,6 +292,7 @@
 ## Task B.14 — Docs + progress
 
 **Files:**
+
 - Modify: `docs/plans/progress.md` — Phase B entry
 - Modify: `docs/plans/task_plan.md` — Phase B status → complete
 - Modify: `CLAUDE.md` § Frontend — note shipped surfaces
@@ -288,7 +304,7 @@
 ## Phase B exit gate
 
 1. Every operator route renders without a console error; axe 0 violations; Lighthouse budgets met.
-2. Sign-in as operator → can load Briefing, Judicial Watch, dossier, compare, search, graph; cannot load `/admin/*`.
+2. Sign-in as operator → can load Briefing, Judicial Watch, dossier, compare, search, graph; cannot load `/admin/`*.
 3. Sign-in as viewer → same except no "Save view" / "Bookmark" affordances (hidden by `<RoleGate>`), and DB rejects writes if forced (RLS).
 4. Backend pytest green. Frontend Vitest + Playwright green.
 5. `progress.md` + `task_plan.md` updated.

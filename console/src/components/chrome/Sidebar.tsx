@@ -31,11 +31,13 @@ export function Sidebar({ brand, items, "aria-label": ariaLabel }: Props) {
     >
       <div className="flex gap-3.5 px-6 pb-7 pt-7">
         <Image
-          src="/branding/shield.svg"
+          src="/branding/shield-crest.png"
           alt=""
-          width={44}
-          height={55}
-          className="shrink-0 opacity-[0.92]"
+          width={112}
+          height={112}
+          quality={100}
+          sizes="56px"
+          className="h-14 w-14 shrink-0 object-contain opacity-[0.92]"
           priority
         />
         <div className="min-w-0">

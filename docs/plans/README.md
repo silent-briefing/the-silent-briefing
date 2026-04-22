@@ -20,6 +20,7 @@
 | `2026-04-20-gui-phase-b-operator-console.md` | active | **Phase B** — public/operator surfaces (briefing, judicial watch, officials hub, dossier, comparison, search, graph, feeds, saved views, alerts) |
 | `2026-04-20-gui-phase-c-admin-console.md` | active | **Phase C** — `/admin` (officials CRUD, dossier review, intel runs, correlations, sources, users/roles, opinions/bills, media, engine ops, settings) |
 | `2026-04-20-gui-phase-d-directus-sunset.md` | active | **Phase D** — parity verification → Directus decommission |
+| `2026-04-20-bill-summarization.md` | active | **Bill programme** — three phases (backend pipeline, admin workflow, operator surfaces). Runs parallel to GUI Phases A–D; depends on GUI Phase A exit gate for Phase 2/3. |
 
 ## Archived / superseded — do not edit
 
@@ -55,8 +56,13 @@ task_plan.md  (master tracker — phases A, B, C, D with status + gates)
   ├── Phase C: 2026-04-20-gui-phase-c-admin-console.md           │  as subagent
   │     └─ /admin CRUD + workflows. Depends on A.                │  streams.
   │                                                               ┘
-  └── Phase D: 2026-04-20-gui-phase-d-directus-sunset.md
-        └─ Parity audit → decommission Directus. Depends on C.
+  ├── Phase D: 2026-04-20-gui-phase-d-directus-sunset.md
+  │     └─ Parity audit → decommission Directus. Depends on C.
+  │
+  └── Bill programme: 2026-04-20-bill-summarization.md
+        ├─ Bill P1 backend pipeline (standalone; chunking + 5-stage LLM + anti-hallucination)
+        ├─ Bill P2 admin workflow (depends on GUI Phase A)
+        └─ Bill P3 operator surfaces /bills (depends on GUI Phase B.2 primitives)
 ```
 
 ## Convention

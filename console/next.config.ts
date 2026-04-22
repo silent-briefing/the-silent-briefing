@@ -9,6 +9,9 @@ const extraOrigins = (process.env.NEXT_PUBLIC_ALLOWED_DEV_ORIGINS ?? "")
 const nextConfig: NextConfig = {
   // Browsing the dev server from another device (e.g. phone on LAN) — add host/IP here or via env.
   allowedDevOrigins: ["127.0.0.1", "192.168.1.211", ...extraOrigins],
+  images: {
+    qualities: [75, 100],
+  },
 };
 
 export default nextConfig;

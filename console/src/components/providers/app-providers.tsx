@@ -1,14 +1,13 @@
 "use client";
 
-import { ThemeProvider } from "next-themes";
-
 import { Toaster } from "@/components/ui/sonner";
 
+/** Light-only shell: avoid `next-themes` here — its inline `<script>` trips React 19 in the App Router client tree. */
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+    <>
       {children}
       <Toaster />
-    </ThemeProvider>
+    </>
   );
 }

@@ -201,6 +201,9 @@ CLERK_SECRET_KEY=sk_...
 - **App roles (three):** `admin`, `operator`, `viewer` — stored on the Clerk user as **`public_metadata.role`**. Middleware treats a missing role as **`viewer`** for route access; `/admin/*` requires **`admin`**. JWT template **`supabase`** should pass `role`, `org_id`, `sub`, and `aud: "authenticated"` per `docs/plans/04_foundation_supabase_directus.md`.
 - Directus admin protected separately (Directus RBAC — do not expose to Clerk users directly unless building custom integration).
 - JWT from Clerk can be validated server-side to scope Supabase RLS queries.
+- **Operator editorial components (Phase B.2):** live under **`console/src/components/operator/`** — token-backed primitives (house card hover pinstripe, `MetaLabel` tracking, portrait grayscale hover, `SourceCite` with Mountain Time). Dev preview: **`/operator-primitives`** (disabled in production builds).
+- **Operator data layer (Phase B.3):** **`console/src/lib/queries/`** — typed Supabase reads (`listSupremeCourt`, `getDossierClaims`, `getAcceptedEdgesForEntity`, etc.) with **Zod** at boundaries; **`semanticSearchViaBff`** / **`fetchOfficialFeedsViaBff`** target FastAPI paths that still need implementing server-side.
+- **Operator `dossier_claims` (Phase B.1):** the **`authenticated`** role may `SELECT` only rows with **`published = true`**, **`pipeline_stage`** ∈ `writer_sonar`, `human_edit`, and an **active** `officials` row (or `official_id` null). Internal stages (`retrieval_sonar`, `critique_sonar`) stay service-role / Directus only. Stub content tables **`opinions`**, **`bills`**, **`media_coverage`** use the same **`published`** gate for authenticated reads.
 
 ---
 
@@ -260,6 +263,15 @@ For every final dossier/brief (judicial especially):
 - Portraits: grayscale at rest, colorize to full on hover (600ms ease).
 - Animation: 3 families only — screen enter (opacity+y), list hover (left-accent pinstripe), data reveal (staggered). `prefers-reduced-motion` honored.
 - The `design/ui_kits/operator_console/OperatorConsole.jsx` is **reference only** — do not copy directly, use as design guide for layout/patterns.
+
+**Phase A foundation (shipped — GUI programme):**
+
+- **App:** `console/` — Next.js App Router + TypeScript strict, **Bun** for install/scripts. Auth edge: **`src/proxy.ts`** with **`clerkMiddleware`** (Next.js 16 `proxy` convention — same as legacy middleware).
+- **Clerk:** **Organizations** enabled; **three roles** — `admin`, `operator`, `viewer` — from `public_metadata.role` plus org claims; `/admin/*` requires admin. Default for signed-in users without a role is **viewer** on non-admin routes (see Authentication section above for middleware detail).
+- **Data path:** **Hybrid** — reads and simple work in the browser via **`@supabase/ssr`** and the user’s JWT (Clerk → Supabase template; **RLS** is the real boundary). Orchestration, service-role reads, and auditable admin mutations go through the **FastAPI BFF** (`/v1/console/*`, `/v1/admin/*`). **Never** ship `service_role` in client bundles — ESLint + `bun run check:secrets` in CI.
+- **UI stack:** Tailwind v4 **`@theme`** wired to `design/colors_and_type.css` via `console/src/styles/tokens.css`; **shadcn/Radix** primitives in `console/src/components/ui/` are **re-themed** (no default gray/blue chrome). Operator chrome aligns with `design/ui_kits/operator_console`.
+- **Client data layer:** React Query provider + `bffJson` fetch helper with Zod at trust boundaries (Phase A.9).
+- **CI:** `.github/workflows/gui-ci.yml` — typecheck, lint, Vitest, production build, Playwright (incl. axe on key routes), Lighthouse CI (currently non-blocking), backend `pytest`.
 
 **Palantir UX patterns to implement:**
 - Supreme Court main page: justices grid with key metrics + latest correlations + news feed teaser.

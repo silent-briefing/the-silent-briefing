@@ -1,0 +1,101 @@
+"use client";
+
+import {
+  FileText,
+  GitBranch,
+  LayoutList,
+  Newspaper,
+  Scale,
+  Swords,
+} from "lucide-react";
+import * as React from "react";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { OfficialCardRow } from "@/lib/queries/schemas";
+import { cn } from "@/lib/utils";
+
+import { AdversarialPanel } from "./tabs/Adversarial";
+import { ClaimsPanel } from "./tabs/Claims";
+import { FeedPanel } from "./tabs/Feed";
+import { GraphPanel } from "./tabs/Graph";
+import { OverviewPanel } from "./tabs/Overview";
+import { TimelinePanel } from "./tabs/Timeline";
+
+const tabCls =
+  "rounded-none border-0 bg-transparent px-0 py-3 font-sans text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--fg-4)] data-active:text-[var(--fg-1)] after:bg-tertiary";
+
+export type DossierTabsShellProps = {
+  officialId: string;
+  official: OfficialCardRow;
+  jurisdictionName: string;
+  className?: string;
+};
+
+export function DossierTabsShell({
+  officialId,
+  official,
+  jurisdictionName,
+  className,
+}: DossierTabsShellProps) {
+  const [tab, setTab] = React.useState("overview");
+
+  return (
+    <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className={cn("w-full", className)}>
+      <TabsList
+        variant="line"
+        className="mb-8 h-auto w-full min-w-0 flex-wrap justify-start gap-x-6 gap-y-1 border-b border-[rgba(212,175,55,0.2)] bg-transparent p-0"
+      >
+        <TabsTrigger value="overview" className={cn(tabCls, "gap-2")}>
+          <LayoutList className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="claims" className={cn(tabCls, "gap-2")}>
+          <FileText className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
+          Claims
+        </TabsTrigger>
+        <TabsTrigger value="adversarial" className={cn(tabCls, "gap-2")}>
+          <Swords className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
+          Adversarial
+        </TabsTrigger>
+        <TabsTrigger value="graph" className={cn(tabCls, "gap-2")}>
+          <GitBranch className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
+          Graph
+        </TabsTrigger>
+        <TabsTrigger value="feed" className={cn(tabCls, "gap-2")}>
+          <Newspaper className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
+          Feed
+        </TabsTrigger>
+        <TabsTrigger value="timeline" className={cn(tabCls, "gap-2")}>
+          <Scale className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
+          Timeline
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview" className="mt-0 max-w-5xl">
+        <section aria-label="Dossier overview">
+          <OverviewPanel official={official} jurisdictionName={jurisdictionName} />
+        </section>
+      </TabsContent>
+      <TabsContent value="claims" className="mt-0 max-w-5xl">
+        <section aria-label="Dossier claims">
+          <ClaimsPanel officialId={officialId} fetchEnabled={tab === "claims"} />
+        </section>
+      </TabsContent>
+      <TabsContent value="adversarial" className="mt-0 max-w-5xl">
+        <section aria-label="Adversarial review">
+          <AdversarialPanel officialId={officialId} fetchEnabled={tab === "adversarial"} />
+        </section>
+      </TabsContent>
+      <TabsContent value="graph" className="mt-0 max-w-5xl">
+        <GraphPanel />
+      </TabsContent>
+      <TabsContent value="feed" className="mt-0 max-w-5xl">
+        <FeedPanel />
+      </TabsContent>
+      <TabsContent value="timeline" className="mt-0 max-w-5xl">
+        <section aria-label="Dossier timeline">
+          <TimelinePanel officialId={officialId} fetchEnabled={tab === "timeline"} />
+        </section>
+      </TabsContent>
+    </Tabs>
+  );
+}

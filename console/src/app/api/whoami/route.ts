@@ -1,25 +1,22 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /**
- * Smoke: Clerk session + Supabase sees the same JWT subject as `auth.jwt()->>'sub'`.
- * Requires Clerk Supabase integration or `supabase` JWT template with matching `sub`.
+ * Smoke: Clerk session. (Server Supabase uses Clerk JWT via `accessToken`; `supabase.auth.*` is unavailable on that client.)
  */
 export async function GET() {
-  const { userId } = await auth();
+  const { userId, orgId, sessionClaims } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.auth.getUser();
+  const user = await currentUser();
 
   return NextResponse.json({
     clerkUserId: userId,
-    supabaseUser: data.user
-      ? { id: data.user.id, role: data.user.role }
-      : null,
-    supabaseAuthError: error?.message ?? null,
+    orgId: orgId ?? null,
+    email: user?.primaryEmailAddress?.emailAddress ?? null,
+    publicMetadata: user?.publicMetadata ?? {},
+    sessionClaims: sessionClaims ?? {},
   });
 }

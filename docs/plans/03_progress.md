@@ -103,3 +103,29 @@ Local run and deployment walkthrough: [`README.md`](../README.md) at repo root.
 - **U3.5:** `supabase/migrations/20260422103000_authenticated_console_reads.sql`; Clerk + RLS documented in `docs/plans/04_foundation_supabase_directus.md`; `CLAUDE.md` env hints for console.
 - **U3.6:** `GET /v1/console/judicial/supreme-court`, `GET /v1/console/officials/{slug}` (service-role BFF); `tests/test_api_console.py`.
 - **Verify:** `uv run pytest` → 46 passed.
+
+**2026-04-21 — GUI Phase A completion (A.10 CI + A.11 docs)**
+
+- **A.10:** Added [`.github/workflows/gui-ci.yml`](../../.github/workflows/gui-ci.yml) — console typecheck, lint, Vitest, `check:secrets`, production build, Playwright (`CI=true` starts `next start` after build; axe on `/`, `/judicial/supreme-court`, `/admin`), Lighthouse CI via `console/lighthouserc.cjs` (`continue-on-error` until budgets tighten), backend `pytest`. README **Continuous integration (GUI)** section documents jobs and optional Clerk secrets.
+- **A.11:** README **Operator console** section documents typecheck, build, E2E local vs CI; Docs link fixed to `docs/plans/04_foundation_supabase_directus.md`. `CLAUDE.md` § Frontend — **Phase A foundation** bullets (Clerk Orgs, three roles, hybrid data path, themed shadcn, CI). `AGENTS.md` — Phase A complete + CI/local parity. `docs/plans/task_plan.md` Phase A → **complete**.
+- **Verify (console):** `bun run typecheck`, `lint`, `test`, `build`; `bun run test:e2e` against dev server on 3000 (6 passed, 1 skipped).
+
+**2026-04-21 — GUI Phase B.1 (operator RLS tranche)**
+
+- Migration **`supabase/migrations/20260424103000_operator_surface_rls.sql`:** `dossier_claims` **`published`** (default false); replace authenticated policy with **published +** `pipeline_stage` in (`writer_sonar`, `human_edit`) + active-official guard; composite index **`idx_officials_jurisdiction_office_current`**; new **`opinions`**, **`bills`**, **`media_coverage`** (minimal columns, `published` gate, RLS, Directus grants).
+- **`backend/tests/test_rls_operator.py`:** authenticated viewer/operator/admin dossier visibility; proposed `entity_edges` hidden; published gates on new content tables; jurisdictions still readable.
+- **Verify:** `uv run pytest` → **61** passed (after `supabase db reset` locally).
+
+**2026-04-21 — GUI Phase B.2 (shared operator primitives)**
+
+- **`console/src/components/operator/`:** `Card`, `SectionHeader`, `MetaLabel`, `Portrait`, `SourceCite`, `ClaimRow`, `StatusDot`, `KpiTile`, `EmptyState`; barrel `index.ts`; dev **`OperatorPrimitivesBoard`**.
+- **Tests:** `operator.primitives.snap.test.tsx` + **`__snapshots__`** (10 components).
+- **Dev route:** **`/operator-primitives`** (`NODE_ENV !== 'production'`), documents Next `_primitives` private-segment limitation vs plan filename.
+- **Verify:** `bun run test` (39), `lint`, `typecheck`, `build`.
+
+**2026-04-21 — GUI Phase B.3 (operator data-access layer)**
+
+- **`console/src/lib/queries/`:** `schemas.ts` (Zod + `claimHasAdversarialFlag`), `officials.ts`, `dossier.ts`, `graph.ts`, `search.ts`, `feeds.ts`, `saved-views.ts`, `index.ts`; expanded **`lib/supabase/types.ts`** for those tables.
+- **BFF (stubs):** `POST /v1/console/search/semantic`, `GET /v1/console/feeds/{id}` — client + schema only until FastAPI routes land (B.11 / feeds).
+- **Tests:** `schemas.test.ts`, `officials.test.ts`, `search.test.ts`, `feeds.test.ts`, `test-utils.ts` chain mock.
+- **Verify:** `bun run test` (49), `build`.

@@ -157,7 +157,23 @@ Measured via Lighthouse CI in the `gui-ci.yml` workflow (Phase A.7).
 
 ---
 
-## §9 — Deferred / TBD (will become findings as we decide)
+## §9 — Bill summarization programme (2026-04-20)
+
+**Context:** user requested an AI summary feature for Utah bills with anti-hallucination guarantees, source linkage, and version tracking. Full plan: `docs/plans/2026-04-20-bill-summarization.md`.
+
+1. **Scope locked to Utah Legislature only in v1.** Federal + local deferred — nail one source than half-nail three.
+2. **All versions tracked** (introduced through enrolled/signed). Re-summarize each; diff UI surfaces the drift. Cost increase acceptable because mandatory human review makes stale summaries worse than re-runs.
+3. **Separate `bill_chunks` table (not `rag_chunks` reuse).** Bills carry structure opinions don't — section numbers, line ranges, version linkage, amendment strikethroughs. Shoving this into `rag_chunks.metadata` breaks the ANN RPC simplicity and complicates RLS (opinions public; bill_chunks service-role-only). Consistent with the existing `dossier_claims` / `rag_chunks` / `entity_edges` split.
+4. **Five-stage LLM pipeline with claim-FK integrity at every stage:** map → section → rollup → adversarial → synthesis. Rejected alternatives: plain map-reduce (no adversarial = load-bearing anti-hallucination gap); single-pass long-context (Utah appropriation bills > 400 pages, citation fidelity degrades, no per-chunk durable artifact); refine/streaming-accumulator (no parallelism, hides where hallucinations enter).
+5. **Page + line positions are authoritative from the chunk, not the model.** Model produces `source_quote` verbatim; insert transaction rejects on substring-normalize mismatch. Positions physically cannot be hallucinated.
+6. **Every summary requires human review.** No auto-publish. Matches CLAUDE.md's adversarial-human-gate stance for dossiers; user explicitly chose `human_gate_all`.
+7. **Plan integration strategy:** standalone plan doc + parallel programme row in the master tracker. GUI A/B/C/D plans cross-referenced but untouched (per user directive "don't break existing plans").
+8. **UI citation interaction:** split-view with a PDF pane via `react-pdf` (client dynamic import, off main bundle). Every rollup/provision/FAQ element carries `cited_claim_ids`; click resolves claim → chunk → page and scrolls the PDF pane.
+9. **PDF export tooling TBD at Task 20:** weasyprint preferred (pure Python); fallback to headless Chromium via Playwright if weasyprint Windows deps are painful. Decide when we get there; record the pick here.
+
+---
+
+## §10 — Deferred / TBD (will become findings as we decide)
 
 - Email transport for alerts (Resend? Supabase SMTP? Clerk's transactional?).
 - Storage for media uploads (Supabase Storage vs R2).

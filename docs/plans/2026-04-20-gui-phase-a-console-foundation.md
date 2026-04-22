@@ -4,11 +4,12 @@
 
 **Goal:** Stand up the Next.js 15 operator console foundation: auth (Clerk Orgs + 3 roles), data access (Supabase via Clerk JWT + BFF), design-token-faithful primitives, role-aware middleware, audit log table, feature flags, and CI. Everything Phases B and C need is landed and tested.
 
-**Architecture:** Single Bun-managed Next.js 15 App Router app at `console/` at repo root. Tailwind v4 `@theme` binds `design/colors_and_type.css` tokens as utilities. Clerk Organizations on; `public_metadata.role` stores app role. Two Supabase clients: browser (`supabase-js` with Clerk JWT) and server (`@supabase/ssr`). FastAPI BFF extended with `/v1/admin/*` namespace protected by Clerk JWT verification. New Supabase migrations add `admin_audit_log`, `user_saved_views`, `alerts`, `settings` tables with RLS.
+**Architecture:** Single Bun-managed Next.js 15 App Router app at `console/` at repo root. Tailwind v4 `@theme` binds `design/colors_and_type.css` tokens as utilities. Clerk Organizations on; `public_metadata.role` stores app role. Two Supabase clients: browser (`supabase-js` with Clerk JWT) and server (`@supabase/ssr`). FastAPI BFF extended with `/v1/admin/`* namespace protected by Clerk JWT verification. New Supabase migrations add `admin_audit_log`, `user_saved_views`, `alerts`, `settings` tables with RLS.
 
 **Tech Stack:** Bun, Next.js 15, TypeScript strict, Tailwind v4, `@clerk/nextjs` v6 (Organizations), `@supabase/ssr` + `supabase-js`, shadcn/ui (copy-in), Radix primitives, `@tanstack/react-query`, Zod, Vitest, Playwright, axe-core, Lighthouse CI. Backend: `uv`, FastAPI, `respx`, `pyjwt` (Clerk JWT verification).
 
 **Read first:**
+
 - `CLAUDE.md` (engineering + auth + design rules)
 - `docs/plans/task_plan.md` (phase tracker)
 - `docs/plans/findings.md` §1–§7
@@ -21,6 +22,7 @@
 ## Task A.1 — Scaffold Next.js 15 app
 
 **Files:**
+
 - Create: `console/` (via `bunx create-next-app@latest`)
 - Create: `console/.env.local.example`
 - Modify: root `README.md` — Console section (how to run)
@@ -34,7 +36,7 @@
 
 **Step 4:** Record resolved versions in `docs/plans/progress.md` under today's entry.
 
-**Step 5:** Run: `cd console && bun run dev`. Open http://localhost:3000. Expected: Next.js default page.
+**Step 5:** Run: `cd console && bun run dev`. Open [http://localhost:3000](http://localhost:3000). Expected: Next.js default page.
 
 **Step 6:** Commit: `feat(console): scaffold Next.js 15 + Clerk + Supabase + design deps`.
 
@@ -43,6 +45,7 @@
 ## Task A.2 — Design tokens + Tailwind v4 `@theme`
 
 **Files:**
+
 - Create: `console/src/styles/tokens.css` (re-exports `design/colors_and_type.css`)
 - Modify: `console/src/app/globals.css` — import tokens + Tailwind `@theme` block mapping tokens to utility keys
 - Create: `console/src/styles/fonts.css` — `@font-face` from `design/fonts/` (self-hosted Newsreader + Inter WOFF2)
@@ -51,6 +54,7 @@
 **Step 1:** Copy `design/colors_and_type.css` contents into `console/src/styles/tokens.css` via `@import "../../../design/colors_and_type.css";` (relative path) so the source stays single. If relative import breaks in Next/Turbopack, fall back to a build-time copy script `console/scripts/sync-tokens.mjs` and call from `predev`/`prebuild`.
 
 **Step 2:** In `globals.css`:
+
 ```css
 @import "tailwindcss";
 @import "./styles/tokens.css";
@@ -87,6 +91,7 @@
 ## Task A.3 — Clerk with Organizations + three-role model
 
 **Files:**
+
 - Create: `console/src/middleware.ts`
 - Create: `console/src/lib/auth/roles.ts`
 - Create: `console/src/lib/auth/guards.ts`
@@ -95,9 +100,10 @@
 - Modify: `console/.env.local.example` — Clerk keys
 - Modify: `CLAUDE.md` § Authentication — note Organizations on + role metadata schema
 
-**Step 1:** Follow Clerk Next.js quickstart (use `clerk:setup` skill if available): enable Organizations in Clerk Dashboard; create JWT template named **`supabase`** matching `docs/plans/04_foundation_supabase_directus.md` § Clerk JWT (claims: `role`, `org_id`, `sub`, `aud: "authenticated"`).
+**Step 1:** Follow Clerk Next.js quickstart (use `clerk:setup` skill if available): enable Organizations in Clerk Dashboard; create JWT template named `**supabase`** matching `docs/plans/04_foundation_supabase_directus.md` § Clerk JWT (claims: `role`, `org_id`, `sub`, `aud: "authenticated"`).
 
 **Step 2:** `roles.ts`:
+
 ```ts
 export const ROLES = ["admin", "operator", "viewer"] as const;
 export type Role = (typeof ROLES)[number];
@@ -109,6 +115,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ```
 
 **Step 3:** `middleware.ts` with `clerkMiddleware`:
+
 - Public: `/sign-in`, `/sign-up`, `/api/health`
 - `viewer+`: everything else under `/`
 - `admin`: `/admin/*`, `/api/admin/*`
@@ -127,6 +134,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.4 — Supabase clients (browser + server) with Clerk JWT
 
 **Files:**
+
 - Create: `console/src/lib/supabase/browser.ts`
 - Create: `console/src/lib/supabase/server.ts`
 - Create: `console/src/lib/supabase/types.ts` (generated types target)
@@ -150,10 +158,12 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.5 — Core admin/app tables + RLS (migration)
 
 **Files:**
+
 - Create: `supabase/migrations/<timestamp>_gui_support_tables.sql`
 - Test: `backend/tests/test_rls_gui_tables.py` (psycopg checks via `service_role` and simulated `authenticated`)
 
 **Tables:**
+
 - `admin_audit_log` — `id uuid pk`, `actor_user_id text` (Clerk id), `actor_role text`, `org_id text`, `action text`, `target_type text`, `target_id text`, `before jsonb`, `after jsonb`, `created_at timestamptz default now()`. RLS: insert by `service_role` only; select by role `admin`.
 - `user_saved_views` — `id uuid pk`, `user_id text`, `org_id text`, `name text`, `kind text` (`officials`|`dossier`|`search`), `query jsonb`, `created_at`. RLS: owner + org admins.
 - `alerts` — `id uuid pk`, `org_id text`, `kind text`, `target_type text`, `target_id text`, `payload jsonb`, `delivered_at`, `read_at`. RLS: org members.
@@ -175,6 +185,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.6 — App shell + route groups
 
 **Files:**
+
 - Create: `console/src/app/layout.tsx` (wrap ClerkProvider + QueryClientProvider + design-token font vars on `<body>`)
 - Create: `console/src/app/(operator)/layout.tsx` — operator chrome (sidebar, top bar per `design/ui_kits/operator_console/OperatorConsole.jsx` intent; do not copy code)
 - Create: `console/src/app/(operator)/page.tsx` — placeholder Briefing home (Phase B fills it)
@@ -185,6 +196,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 - Create: `console/src/components/chrome/AuditLogFooter.tsx` (32px navy footer with mono tracked microlabels — per design)
 
 **Constraints:**
+
 - Every chrome component ≤ 200 LOC.
 - No 1px solid borders for section breaks — tonal surface only (cream `--surface` main, `--surface-container-low` cards, navy `--primary` sidebar).
 - Focus ring gold 2px / 4px offset.
@@ -201,6 +213,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.7 — Shadcn primitives, re-themed
 
 **Files:**
+
 - Create: `console/src/components/ui/button.tsx`
 - Create: `console/src/components/ui/input.tsx`
 - Create: `console/src/components/ui/label.tsx`
@@ -218,6 +231,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 - Create: `console/src/components/ui/badge.tsx` (pill chip — the one rounded-full exception)
 
 **Process per primitive:**
+
 1. Copy shadcn source (`bunx shadcn@latest add <name>` — uses Bun).
 2. Open the file; strip all class names that reference `gray-*`, `blue-*`, `slate-*`, `ring-*` defaults.
 3. Rewire with design tokens via Tailwind utilities (`bg-surface`, `bg-surface-1`, `text-primary`, `border-[rgba(0,15,34,0.08)]`, `focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4`).
@@ -236,6 +250,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.8 — BFF admin namespace + Clerk JWT verification
 
 **Files:**
+
 - Create: `backend/briefing/api/deps_auth.py` — `require_clerk_user`, `require_role`
 - Create: `backend/briefing/api/routes/admin/__init__.py` — mounts `/v1/admin` router
 - Create: `backend/briefing/api/routes/admin/health.py` — `GET /v1/admin/health` returns `{role, user_id}` (smoke for auth)
@@ -260,6 +275,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.9 — React Query provider + BFF client + audit-log helper
 
 **Files:**
+
 - Create: `console/src/lib/query/provider.tsx` — QueryClientProvider
 - Create: `console/src/lib/bff/client.ts` — fetch wrapper adding Clerk token
 - Create: `console/src/lib/bff/audit.ts` — helper for admin mutations that writes an `admin_audit_log` entry via BFF
@@ -276,10 +292,12 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.10 — CI
 
 **Files:**
+
 - Create: `.github/workflows/gui-ci.yml`
 - Modify: root `README.md` — CI section
 
 **Jobs:**
+
 1. `console-typecheck-lint` — `bun install && bun run typecheck && bun run lint`
 2. `console-unit` — `bun run test` (Vitest)
 3. `console-e2e` — Playwright against `bun run build && bun run start`, with a seeded Supabase local + mocked Clerk (use Clerk test tokens)
@@ -299,6 +317,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 ## Task A.11 — Docs
 
 **Files:**
+
 - Modify: root `README.md` — Console section (install, dev, test, build)
 - Modify: `CLAUDE.md` § Frontend — record A-phase decisions (Clerk Orgs, 3 roles, hybrid data path, shadcn re-themed)
 - Modify: `AGENTS.md` — learned facts from Phase A
@@ -316,7 +335,7 @@ export function roleAtLeast(actual: Role | undefined, required: Role): boolean {
 1. `bun run dev` → `/` loads with design tokens, Newsreader serif headline, cream background.
 2. Sign in (Clerk) as operator → `/` shows operator chrome; `/admin` redirects with `?denied=admin-required`.
 3. Promote same user to admin in Clerk → `/admin` loads admin chrome.
-4. `console/src/**` contains zero `SERVICE_ROLE` strings (CI guard).
+4. `console/src/`** contains zero `SERVICE_ROLE` strings (CI guard).
 5. `cd backend && uv run pytest` → all green (new `test_auth_deps.py`, `test_rls_gui_tables.py` included).
 6. `cd console && bun run build` → success; `bun run test` → green; Playwright smoke → green; axe → 0 violations on rendered shells; Lighthouse → budgets met.
 7. `gui-ci.yml` all jobs green on the merge commit.

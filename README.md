@@ -40,8 +40,12 @@ bun install
 bun run dev                        # http://localhost:3000
 ```
 
-- **Tests:** `bun run test` (Vitest). **Lint:** `bun run lint` (ESLint 9 + `eslint-config-next`). **Dev server** uses **webpack** (`bun run dev`) by default to avoid Turbopack instability with Clerk on some Windows hosts; use `bun run dev:turbo` if you prefer Turbopack.
+- **Typecheck:** `bun run typecheck` (`tsc --noEmit`, strict).
+- **Tests:** `bun run test` (Vitest). **Lint:** `bun run lint` (ESLint 9 + `eslint-config-next`). **Production build:** `bun run build` (run before `bun run start` or before CI-style E2E).
+- **E2E:** `bun run test:e2e` (Playwright — shell smoke, axe on `/`, `/judicial/supreme-court`, `/admin`). **Local:** start the app on `http://127.0.0.1:3000` (`bun run dev` or `bun run build && bun run start`), then run `bun run test:e2e`. **CI:** sets `CI=true` so Playwright starts `bun run start` after `build` (port **3000** must be free on the runner).
+- **Dev server** uses **webpack** (`bun run dev`) by default to avoid Turbopack instability with Clerk on some Windows hosts; use `bun run dev:turbo` if you prefer Turbopack.
 - **Public routes:** `/sign-in`, `/sign-up`, `GET /api/health`. All other routes require Clerk; `/admin/*` requires `public_metadata.role === "admin"` (see `CLAUDE.md` § Authentication).
+- **CI:** see [Continuous integration (GUI)](#continuous-integration-gui) (`gui-ci.yml`).
 
 ## Local development
 
@@ -123,8 +127,25 @@ This is a **pattern**, not a single recipe — adjust for your host (Fly, Railwa
 6. **Operational rule**
   After any migration that recreates or wipes the DB in a shared Directus environment, run the **same repair sequence** as local (`bootstrap` → `schema apply` → collection registration) or restore from backup — see `**plans/04_foundation_supabase_directus.md`**.
 
+## Continuous integration (GUI)
+
+Workflow **[`.github/workflows/gui-ci.yml`](.github/workflows/gui-ci.yml)** runs on pushes and pull requests that touch `console/`, `backend/`, or the workflow itself.
+
+| Job | What it runs |
+|-----|----------------|
+| **console-typecheck-lint** | `bun install`, `bun run typecheck`, `bun run lint` |
+| **console-unit** | `bun run test` (Vitest), `bun run check:secrets` (no `service_role` in `console/src`) |
+| **console-build** | `bun run build` (production bundle) |
+| **console-e2e-a11y** | `bun run build`, Playwright (shell smoke + axe on `/`, `/judicial/supreme-court`, `/admin`; `next start` via Playwright `webServer` when `CI=true`) |
+| **console-lighthouse** | Build, `next start`, **Lighthouse CI** (`console/lighthouserc.cjs`) — `continue-on-error: true` until budgets are baselined |
+| **backend-pytest** | `uv sync`, `uv run pytest` |
+
+**Secrets (optional):** set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` in the repo for CI that matches your Clerk test instance. If unset, the workflow uses **non-secret fallbacks** so forks still compile; E2E may still hit Clerk sign-in for unauthenticated flows.
+
+Use **Bun** via `oven-sh/setup-bun` and **uv** via `astral-sh/setup-uv` (no Node matrix).
+
 ## Docs
 
 - `[CLAUDE.md](CLAUDE.md)` — standards, env split, automation rules for agents.
-- `[plans/04_foundation_supabase_directus.md](plans/04_foundation_supabase_directus.md)` — Directus + Supabase pitfalls (`KEY`, `INTERNAL_SERVER_ERROR`, reset flow).
+- `[docs/plans/04_foundation_supabase_directus.md](docs/plans/04_foundation_supabase_directus.md)` — Directus + Supabase pitfalls (`KEY`, `INTERNAL_SERVER_ERROR`, reset flow).
 

@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from briefing.api.deps_auth import ClerkUser, require_clerk_user
 from briefing.config import Settings, get_settings
 
 router = APIRouter(prefix="/v1/console", tags=["console"])
@@ -30,6 +31,21 @@ class OfficialCard(BaseModel):
 
 class OfficialDetail(OfficialCard):
     jurisdiction: JurisdictionRef
+
+
+class IntelligenceRunSummary(BaseModel):
+    id: str
+    pipeline_stage: str
+    status: str
+    created_at: str
+    error_message: str | None = None
+    official_id: str | None = None
+    requires_human_review: bool | None = None
+
+
+class BriefingIntelSummary(BaseModel):
+    total_runs: int
+    recent_runs: list[IntelligenceRunSummary]
 
 
 def _sb_client(settings: Settings) -> Any:
@@ -101,3 +117,49 @@ def get_official_by_slug(slug: str, settings: Settings = Depends(get_settings)) 
         subject_alignment=row.get("subject_alignment"),
         jurisdiction=JurisdictionRef(id=str(j["id"]), name=j["name"], slug=j["slug"]),
     )
+
+
+def _iso_created_at(value: object) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        return value.isoformat()  # type: ignore[no-any-return]
+    return str(value)
+
+
+@router.get("/briefing/intel-summary", response_model=BriefingIntelSummary)
+def briefing_intel_summary(
+    recent_limit: int = 20,
+    _user: ClerkUser = Depends(require_clerk_user),
+    settings: Settings = Depends(get_settings),
+) -> BriefingIntelSummary:
+    """Operator home: total intelligence run count + recent tail (RLS blocks JWT reads on this table)."""
+    if recent_limit < 1 or recent_limit > 100:
+        raise HTTPException(status_code=400, detail="recent_limit must be between 1 and 100")
+    client = _sb_client(settings)
+    count_res = client.table("intelligence_runs").select("id", count="exact").execute()
+    total = int(count_res.count or 0)
+    recent_res = (
+        client.table("intelligence_runs")
+        .select(
+            "id,pipeline_stage,status,created_at,error_message,official_id,requires_human_review",
+        )
+        .order("created_at", desc=True)
+        .limit(recent_limit)
+        .execute()
+    )
+    raw = recent_res.data or []
+    recent: list[IntelligenceRunSummary] = []
+    for r in raw:
+        recent.append(
+            IntelligenceRunSummary(
+                id=str(r["id"]),
+                pipeline_stage=str(r["pipeline_stage"]),
+                status=str(r["status"]),
+                created_at=_iso_created_at(r.get("created_at")),
+                error_message=r.get("error_message"),
+                official_id=str(r["official_id"]) if r.get("official_id") else None,
+                requires_human_review=r.get("requires_human_review"),
+            )
+        )
+    return BriefingIntelSummary(total_runs=total, recent_runs=recent)

@@ -1,34 +1,21 @@
 import { auth } from "@clerk/nextjs/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import type { Database } from "./types";
+import { createClient } from "@supabase/supabase-js";
 
-/** Server Supabase client — Clerk session token (`supabase` template) + cookie storage for SSR. */
+import { getClerkSupabaseAccessToken } from "./clerk-token";
+import type { Database } from "./types";
+import { getPublicSupabaseAnonKey, getPublicSupabaseUrl } from "./public-env";
+
+/**
+ * Server Supabase client — Clerk JWT when available (`supabase` template, else default session).
+ *
+ * Uses `createClient` + `accessToken`, not `createServerClient` from `@supabase/ssr`:
+ * the SSR helper always calls `auth.onAuthStateChange`, which is forbidden when
+ * `accessToken` is set (third-party auth).
+ */
 export async function createServerSupabaseClient() {
-  const cookieStore = await cookies();
   const { getToken } = await auth();
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {
-            /* Server Components may not mutate cookies */
-          }
-        },
-      },
-      async accessToken() {
-        return (await getToken({ template: "supabase" })) ?? null;
-      },
-    },
-  );
+  return createClient<Database>(getPublicSupabaseUrl(), getPublicSupabaseAnonKey(), {
+    accessToken: async () => getClerkSupabaseAccessToken(getToken),
+  });
 }

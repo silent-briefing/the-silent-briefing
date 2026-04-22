@@ -6,10 +6,13 @@ Next.js App Router + Clerk + Supabase (`@supabase/ssr` + Clerk JWT). Package nam
 
 ```bash
 bun install
-cp .env.local.example .env.local   # Clerk + Supabase + BFF base URL
+# From repo root: start local Postgres + API (port 54321 by default)
+# supabase start
+cp .env.local.example .env.local   # Clerk keys required; Supabase URL/anon filled for local CLI stack
 bun run dev                        # webpack bundler — avoids Turbopack panics with Clerk on some Windows setups
 ```
 
+- **Supabase:** With `NODE_ENV=development`, missing `NEXT_PUBLIC_SUPABASE_*` defaults to `http://127.0.0.1:54321` and the CLI’s demo anon JWT so the app boots; run **`supabase start`** from the repo root so the API is actually there. Override in `.env.local` for hosted projects.
 - **`bun run dev:turbo`** — Turbopack (faster; may crash in dev on some setups).
 - **LAN / phone testing:** add your machine IP in `next.config.ts` `allowedDevOrigins` or set `NEXT_PUBLIC_ALLOWED_DEV_ORIGINS` (comma-separated) and restart dev.
 - **DB types:** with local Supabase running, `bun run types:db` regenerates `src/lib/supabase/types.ts`.

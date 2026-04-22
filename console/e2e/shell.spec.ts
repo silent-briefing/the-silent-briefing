@@ -21,7 +21,11 @@ test.describe("auth gate + chrome", () => {
         page.getByRole("navigation", { name: /operator navigation/i }),
       ).toBeVisible();
       await expect(
-        page.getByRole("heading", { level: 1, name: /Salt Lake briefing/i }),
+        page.getByRole("heading", { level: 1, name: /Morning brief/i }),
+      ).toBeVisible();
+      await expect(page.getByRole("region", { name: /briefing kpis/i })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: /priority dossiers/i }),
       ).toBeVisible();
     }
   });

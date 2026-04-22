@@ -59,8 +59,8 @@
 
 | Phase | Status | Owner | Depends on | Gate to next |
 |---|---|---|---|---|
-| **A — Console foundation** | in_progress | A.1–A.9 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists), GUI tables migration | Clerk sign-in works; `/` loads design tokens; `proxy.ts` + Supabase clients + GUI support tables + app shell + shadcn primitives + BFF client + `/v1/admin/health`; CI green |
-| **B — Operator console** | pending | — | A | All 10 operator surfaces shippable; Playwright smoke green |
+| **A — Console foundation** | **complete** | A.1–A.11 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists), GUI tables migration | Clerk sign-in works; `/` loads design tokens; `proxy.ts` + Supabase clients + app shell + shadcn primitives + BFF client + `/v1/admin/health`; `gui-ci.yml` green; README/CLAUDE/AGENTS updated |
+| **B — Operator console** | in_progress | B.1 shipped | A | All 10 operator surfaces shippable; Playwright smoke green |
 | **C — Admin console** | pending | — | A | All 10 admin concerns CRUD-complete; mutations audit-logged; BFF tests green |
 | **D — Directus sunset** | pending | — | C | Parity audit signed off; Directus container stopped; docs updated |
 
@@ -123,6 +123,18 @@ Clerk Organizations enabled; `org:admin` Clerk system role maps to app `admin`; 
 | 2026-04-21 | Phase A.6–A.7: operator/admin shell + re-themed shadcn primitives + dev `/_/primitives` storyboard |
 | 2026-04-21 | Phase A.8: `/v1/admin/health` + Clerk JWT deps; operator UI aligned to `design/ui_kits/operator_console` |
 | 2026-04-21 | Phase A.9: `QueryProvider` + `bffJson` (Zod) + audit stub; `NEXT_PUBLIC_BFF_BASE_URL` |
+| 2026-04-21 | Phase A.10: `gui-ci.yml` — typecheck, lint, Vitest, `check:secrets`, build, Playwright + axe, Lighthouse (non-blocking), backend pytest; README CI section |
+| 2026-04-21 | Phase A.11: README console commands + doc links; `CLAUDE.md` / `AGENTS.md` Phase A facts; Phase A tracker → **complete** |
+| 2026-04-21 | Phase B.1: `20260424103000_operator_surface_rls.sql` — `dossier_claims.published`, tightened authenticated SELECT (writer/human_edit + published); `idx_officials_jurisdiction_office_current`; tables `opinions`, `bills`, `media_coverage` + RLS; `backend/tests/test_rls_operator.py` |
+| 2026-04-21 | Phase B.2: `console/src/components/operator/*` editorial primitives + Vitest snapshots; dev board `/operator-primitives` (non-prod) |
+| 2026-04-21 | Phase B.3: `console/src/lib/queries/*` — officials, dossier, graph, search (lexical + BFF semantic stub), feeds BFF stub, saved-views CRUD + Zod + Vitest mocks |
+| 2026-04-21 | Phase B.4: Briefing home `/` — `BriefingHero`, `StatsStrip`, `PriorityList`, `LiveExtractionLog`; `GET /v1/console/briefing/intel-summary` (Clerk + service role); `listUtSupremeCourt` + `lib/queries/briefing.ts`; Playwright shell expectations |
+| 2026-04-22 | Phase B.5 (partial): Judicial hub `/judicial`, roster pages (supreme / appeals / district), `JusticeCard` + `RetentionCountdown`, `listUtByOfficeType`, stub `/judicial/[slug]`; sidebar → `/judicial`; axe routes include `/judicial` |
+| 2026-04-22 | Phase B.6 (partial): `DossierView` + gradient `DossierHeader`, `DossierTabsShell` (6 tabs, gold line, Lucide 20px), placeholder tab panels, `getJurisdictionLabel`, `/judicial/[slug]` + `/officials/[slug]` + `loading.tsx` |
+| 2026-04-22 | Phase B.6 (claims tranche): Claims tab loads `dossier_claims` on activation (React Query + browser Supabase), grouped by category + `@tanstack/react-virtual`, `MetaLabel` headers, `ClaimRow` + `SourceCite`, adversarial badge when `requires_human_review` or adversarial metadata; controlled tabs; Playwright `e2e/dossier.spec.ts` (Hagen → Claims) |
+| 2026-04-22 | Phase B.6 (timeline tranche): Timeline tab uses `getTimeline` on activation, groups by America/Denver calendar day, gold rail + `ClaimRow`/`SourceCite`; copy notes future opinions/media/intel merges; Vitest `timeline-display.test.ts`; Playwright Hagen → Timeline |
+| 2026-04-22 | Phase B.6 (overview tranche): Overview tab shows jurisdiction, office, status, retention, alignment, biography (`OfficialCardRow` + `jurisdictionName` from server); `section` + Playwright assert; Vitest `overview-format.test.ts` |
+| 2026-04-22 | Phase B.6 (adversarial tranche): Adversarial tab loads `getAdversarialFlags` on activation; `groundedness_score` on claim row + metadata critique/synthesis extractors; split-view `AdversarialIssueCard`; Vitest `adversarial-display.test.ts`; Playwright Hagen → Adversarial |
 
 ---
 

@@ -15,7 +15,7 @@ import { Sidebar, type SidebarItem } from "./Sidebar";
 
 const operatorNav: SidebarItem[] = [
   { href: "/", label: "Briefing", icon: LayoutDashboard, match: "exact" },
-  { href: "/judicial", label: "Judicial", icon: Gavel, enabled: false },
+  { href: "/judicial", label: "Judicial", icon: Gavel },
   { href: "/officials", label: "Officials", icon: Users, enabled: false },
   { href: "/dossiers", label: "Dossiers", icon: FileText, enabled: false },
   { href: "/compare", label: "Compare", icon: GitCompare, enabled: false },
