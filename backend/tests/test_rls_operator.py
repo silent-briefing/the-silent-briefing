@@ -215,7 +215,52 @@ def test_media_coverage_published_gate(conn) -> None:
 
 
 def test_jurisdictions_still_readable_authenticated(conn) -> None:
+    try:
+        with conn.cursor() as cur:
+            _set_jwt(cur, {"sub": "user_j", "role": "viewer", "org_id": "org_1"})
+            cur.execute("select count(*) from public.jurisdictions where slug = 'ut'")
+            assert cur.fetchone()[0] >= 1
+    finally:
+        with conn.cursor() as cur:
+            _reset_role(cur)
+
+
+def test_anon_reads_entity_linked_to_active_official(conn) -> None:
+    """Phase B.7: operator graph labels — entities tied to non-deleted officials are visible to anon."""
+    entity_id = str(uuid.uuid4())
+    official_id, jurisdiction_id = str(uuid.uuid4()), None
     with conn.cursor() as cur:
-        _set_jwt(cur, {"sub": "user_j", "role": "viewer", "org_id": "org_1"})
-        cur.execute("select count(*) from public.jurisdictions where slug = 'ut'")
-        assert cur.fetchone()[0] >= 1
+        cur.execute("select id from public.jurisdictions where slug = 'ut' limit 1")
+        row = cur.fetchone()
+        assert row is not None
+        jurisdiction_id = str(row[0])
+        cur.execute(
+            """
+            insert into public.entities (id, type, canonical_name)
+            values (%s, 'person', 'RLS Graph Entity')
+            """,
+            (entity_id,),
+        )
+        cur.execute(
+            """
+            insert into public.officials
+              (id, full_name, slug, jurisdiction_id, office_type, is_current, entity_id)
+            values (%s, 'RLS Graph Judge', %s, %s, 'state_supreme_justice', true, %s)
+            """,
+            (official_id, f"rls-graph-{official_id[:8]}", jurisdiction_id, entity_id),
+        )
+        conn.commit()
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("set role anon")
+            cur.execute("select canonical_name from public.entities where id = %s", (entity_id,))
+            got = cur.fetchone()
+            assert got is not None
+            assert got[0] == "RLS Graph Entity"
+    finally:
+        with conn.cursor() as cur:
+            cur.execute("reset role")
+            cur.execute("delete from public.officials where id = %s", (official_id,))
+            cur.execute("delete from public.entities where id = %s", (entity_id,))
+            conn.commit()

@@ -14,10 +14,18 @@ export type DossierHeaderProps = {
   jurisdictionName: string;
   /** e.g. `{ href: "/judicial/supreme-court", label: "Supreme Court" }` */
   parentNav: { href: string; label: string };
+  /** e.g. dossier bookmark control (client). */
+  actions?: React.ReactNode;
   className?: string;
 };
 
-export function DossierHeader({ official, jurisdictionName, parentNav, className }: DossierHeaderProps) {
+export function DossierHeader({
+  official,
+  jurisdictionName,
+  parentNav,
+  actions,
+  className,
+}: DossierHeaderProps) {
   return (
     <header
       className={cn(
@@ -48,15 +56,18 @@ export function DossierHeader({ official, jurisdictionName, parentNav, className
             <h1 className="font-serif text-3xl font-normal leading-[1.1] tracking-[-0.02em] md:text-[44px]">
               {official.full_name}
             </h1>
-            <button
-              type="button"
-              disabled
-              title="Export ships in a later tranche"
-              className="inline-flex items-center gap-2 rounded-md border border-[rgba(212,175,55,0.35)] px-3 py-2 font-sans text-[10px] font-bold uppercase tracking-[0.22em] text-tertiary opacity-60"
-            >
-              <Share2 className="size-4" strokeWidth={1.5} aria-hidden />
-              Share
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {actions}
+              <button
+                type="button"
+                disabled
+                title="Export ships in a later tranche"
+                className="inline-flex items-center gap-2 rounded-md border border-[rgba(212,175,55,0.35)] px-3 py-2 font-sans text-[10px] font-bold uppercase tracking-[0.22em] text-tertiary opacity-60"
+              >
+                <Share2 className="size-4" strokeWidth={1.5} aria-hidden />
+                Share
+              </button>
+            </div>
           </div>
           <p className="mt-2 font-sans text-sm capitalize text-[var(--fg-inv-2)]">
             {official.office_type.replace(/_/g, " ")}

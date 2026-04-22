@@ -135,6 +135,9 @@ Clerk Organizations enabled; `org:admin` Clerk system role maps to app `admin`; 
 | 2026-04-22 | Phase B.6 (timeline tranche): Timeline tab uses `getTimeline` on activation, groups by America/Denver calendar day, gold rail + `ClaimRow`/`SourceCite`; copy notes future opinions/media/intel merges; Vitest `timeline-display.test.ts`; Playwright Hagen → Timeline |
 | 2026-04-22 | Phase B.6 (overview tranche): Overview tab shows jurisdiction, office, status, retention, alignment, biography (`OfficialCardRow` + `jurisdictionName` from server); `section` + Playwright assert; Vitest `overview-format.test.ts` |
 | 2026-04-22 | Phase B.6 (adversarial tranche): Adversarial tab loads `getAdversarialFlags` on activation; `groundedness_score` on claim row + metadata critique/synthesis extractors; split-view `AdversarialIssueCard`; Vitest `adversarial-display.test.ts`; Playwright Hagen → Adversarial |
+| 2026-04-22 | Phase B.6 (feed tranche): `GET /v1/console/feeds/{official_id}` (Clerk + official 404 check, empty `items` until B.11); `FeedPanel` + `FeedItemRow`, React Query + `fetchOfficialFeedsViaBff`; pytest + Playwright |
+| 2026-04-22 | Phase B.8: `/officials` hub — URL-synced filters (`officials-url-filters`), `listOfficialsFiltered` + `listJurisdictionOptions`, virtualized `OfficialsTable` (gold inset hover), `OfficialsHub` + saved views (`user_saved_views`, Clerk org fallback), sidebar enabled; axe + Lighthouse routes extended |
+| 2026-04-22 | Phase B.9: `/compare` — `CompareHub` + command `ComparePicker` (2–4 slugs, `?s=` CSV), `CompareMatrix` dossier summaries, `computeSharedSlugPairs` direct accepted entity edges → gold pinstripe + label, `compare-print.css`, `getBySlugs` + lexical search uses full `OFFICIAL_CARD_COLUMNS`; sidebar Compare enabled; axe/Lighthouse/e2e |
 
 ---
 

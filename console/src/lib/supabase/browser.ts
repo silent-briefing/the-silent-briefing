@@ -8,7 +8,7 @@ import { getClerkSupabaseAccessToken } from "./clerk-token";
 import type { Database } from "./types";
 import { getPublicSupabaseAnonKey, getPublicSupabaseUrl } from "./public-env";
 
-/** Browser Supabase client — Clerk JWT when `supabase` template exists, else session JWT / anon. */
+/** Browser Supabase client — Clerk JWT when JWT template is configured (`NEXT_PUBLIC_CLERK_SUPABASE_JWT_TEMPLATE`), else anon. */
 export function useSupabaseBrowser(): SupabaseClient<Database> {
   const { getToken } = useAuth();
 

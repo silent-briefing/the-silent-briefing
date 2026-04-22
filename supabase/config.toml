@@ -35,6 +35,7 @@ health_timeout = "2m"
 # server_version;` on the remote database to check.
 major_version = 17
 
+# Transaction pooler is optional locally; `supabase status` may list it as stopped when disabled — expected.
 [db.pooler]
 enabled = false
 # Port to use for the local connection pooler.
@@ -122,9 +123,9 @@ file_size_limit = "50MiB"
 [storage.s3_protocol]
 enabled = true
 
-# Image transformation API is available to Supabase Pro plan.
-# [storage.image_transformation]
-# enabled = true
+# Image transformation (imgproxy). Off locally unless enabled; a “stopped” imgproxy container in CLI status is normal.
+[storage.image_transformation]
+enabled = false
 
 # Store analytical data in S3 for running ETL jobs over Iceberg Catalog
 # This feature is only available on the hosted platform.
@@ -153,9 +154,17 @@ enabled = true
 # in emails.
 site_url = "http://127.0.0.1:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = [
+  "http://127.0.0.1:3000",
+  "http://localhost:3000",
+  "https://127.0.0.1:3000",
+  "https://localhost:3000",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
+# HS256 secret PostgREST uses to verify JWTs (incl. Clerk “Supabase” template). MUST match Clerk Dashboard → Integrations → Supabase.
+# Local default matches `JWT_SECRET` from `supabase status -o env`. Production: use Dashboard → Project Settings → API → JWT Secret (do not use this string).
+jwt_secret = "super-secret-jwt-token-with-at-least-32-characters-long"
 # JWT issuer URL. If not set, defaults to the local API URL (http://127.0.0.1:<port>/auth/v1).
 # jwt_issuer = ""
 # Path to JWT signing key. DO NOT commit your signing keys file to git.

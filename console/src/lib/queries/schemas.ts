@@ -12,7 +12,19 @@ export const officialCardRowSchema = z.object({
   photo_url: z.string().nullable().optional(),
   jurisdiction_id: z.string().uuid(),
   is_current: z.boolean(),
+  entity_id: z.string().uuid().nullable().optional(),
+  party: z.string().nullable().optional(),
 });
+
+export const entityTypeSchema = z.enum(["person", "bill", "issue", "organization", "race"]);
+
+export const entityRowSchema = z.object({
+  id: z.string().uuid(),
+  type: entityTypeSchema,
+  canonical_name: z.string(),
+});
+
+export type EntityRow = z.infer<typeof entityRowSchema>;
 
 export type OfficialCardRow = z.infer<typeof officialCardRowSchema>;
 
@@ -69,14 +81,33 @@ export const userSavedViewRowSchema = z.object({
 
 export type UserSavedViewRow = z.infer<typeof userSavedViewRowSchema>;
 
+export const alertRowSchema = z.object({
+  id: z.string().uuid(),
+  org_id: z.string(),
+  kind: z.string(),
+  target_type: z.string(),
+  target_id: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+  delivered_at: z.string().nullable(),
+  read_at: z.string().nullable(),
+});
+
+export type AlertRow = z.infer<typeof alertRowSchema>;
+
+export const semanticSearchHitSchema = z.object({
+  title: z.string(),
+  score: z.number().optional(),
+  id: z.string().uuid().optional(),
+  slug: z.string().optional(),
+  source_url: z.string().nullable().optional(),
+  source_type: z.string().nullable().optional(),
+});
+
+export type SemanticSearchHit = z.infer<typeof semanticSearchHitSchema>;
+
 export const semanticSearchResponseSchema = z.object({
-  results: z.array(
-    z.object({
-      slug: z.string(),
-      title: z.string(),
-      score: z.number().optional(),
-    }),
-  ),
+  results: z.array(semanticSearchHitSchema),
+  semantic_available: z.boolean().optional(),
 });
 
 export type SemanticSearchResponse = z.infer<typeof semanticSearchResponseSchema>;

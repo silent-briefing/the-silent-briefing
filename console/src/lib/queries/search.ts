@@ -1,12 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { bffJson } from "@/lib/bff/client";
+import { throwIfPostgrestError } from "@/lib/supabase/postgrest-error";
 import type { Database } from "@/lib/supabase/types";
 
+import { OFFICIAL_CARD_COLUMNS } from "./officials";
 import { officialCardRowSchema, type OfficialCardRow, semanticSearchResponseSchema } from "./schemas";
-
-const OFFICIAL_CARD_COLUMNS =
-  "id, slug, full_name, office_type, bio_summary, retention_year, subject_alignment, photo_url, jurisdiction_id, is_current";
 
 /**
  * Lexical search on `officials.full_name` (RLS: non-deleted rows the user can read).
@@ -30,20 +29,20 @@ export async function searchOfficialsLexical(
     .order("full_name", { ascending: true })
     .limit(limit);
 
-  if (error) throw error;
+  throwIfPostgrestError(error);
   const rows = Array.isArray(data) ? data : [];
   return rows.map((r) => officialCardRowSchema.parse(r));
 }
 
 /**
- * Semantic search via BFF (`POST /v1/console/search/semantic`). Wire FastAPI route before production use.
+ * Semantic search via BFF (`POST /v1/search/semantic`) — Perplexity embed + `match_rag_chunks_public`.
  */
 export async function semanticSearchViaBff(
   getToken: () => Promise<string | null>,
   query: string,
 ): Promise<ReturnType<typeof semanticSearchResponseSchema.parse>> {
   return bffJson({
-    path: "/v1/console/search/semantic",
+    path: "/v1/search/semantic",
     method: "POST",
     body: { query },
     getToken,

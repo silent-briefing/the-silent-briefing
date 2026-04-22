@@ -42,14 +42,18 @@ describe("search queries", () => {
         status: 200,
         text: async () =>
           JSON.stringify({
-            results: [{ slug: "justice-hagen", title: "Dossier", score: 0.9 }],
+            results: [
+              { id: "550e8400-e29b-41d4-a716-446655440000", title: "Dossier preview", score: 0.9 },
+            ],
+            semantic_available: true,
           }),
       }),
     );
 
     try {
       const res = await semanticSearchViaBff(async () => "jwt", "utah supreme");
-      expect(res.results[0]!.slug).toBe("justice-hagen");
+      expect(res.results[0]!.title).toBe("Dossier preview");
+      expect(res.semantic_available).toBe(true);
     } finally {
       vi.unstubAllGlobals();
       if (prev === undefined) delete process.env[envKey];

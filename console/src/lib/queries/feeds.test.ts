@@ -22,7 +22,7 @@ describe("feeds queries", () => {
       expect(res.items).toHaveLength(1);
       expect(fetchMock).toHaveBeenCalled();
       const url = String(fetchMock.mock.calls[0]![0]);
-      expect(url).toContain("/v1/console/feeds/");
+      expect(url).toContain("/v1/feeds/");
       expect(url).toContain("550e8400-e29b-41d4-a716-446655440000");
     } finally {
       vi.unstubAllGlobals();

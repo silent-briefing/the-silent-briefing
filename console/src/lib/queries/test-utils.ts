@@ -13,6 +13,7 @@ export function createSupabaseQueryMock(result: { data: unknown; error: null }):
     "eq",
     "is",
     "ilike",
+    "in",
     "or",
     "order",
     "limit",

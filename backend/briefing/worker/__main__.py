@@ -289,10 +289,16 @@ def _cmd_retrieval_pass(args: argparse.Namespace) -> int:
         print(f"Inserted {len(bundles)} retrieval dossier_claims row(s).")
         if args.correlate:
             print("(correlation pass ran on merged bundle text when --correlate)")
+        from briefing.services.alerts.dispatcher import AlertDispatcher
+
+        disp = AlertDispatcher.try_from_settings(settings)
+        if disp:
+            disp.notify_retrieval_pass(args.official_id, n_stages=len(bundles))
     return 0
 
 
 def _cmd_dossier_write(args: argparse.Namespace) -> int:
+    from briefing.config import get_settings
     from briefing.services.intelligence.dossier_writer import run_dossier_write_from_claims
     from briefing.services.llm.perplexity import PerplexityLLMService
 
@@ -318,6 +324,12 @@ def _cmd_dossier_write(args: argparse.Namespace) -> int:
         print("(dry-run: no writer_sonar claim insert)")
     elif args.persist:
         print("Inserted Dossier / Draft claim (pipeline_stage=writer_sonar).")
+        settings = get_settings()
+        from briefing.services.alerts.dispatcher import AlertDispatcher
+
+        disp = AlertDispatcher.try_from_settings(settings)
+        if disp:
+            disp.notify_dossier_draft(args.official_id)
     return 0
 
 
@@ -347,6 +359,14 @@ def _cmd_adversarial_dossier(args: argparse.Namespace) -> int:
         print("(dry-run: no intelligence_runs writes)")
     elif args.persist:
         print(f"Inserted {len([x for x in result.persisted_run_ids if x])} intelligence_runs row(s).")
+        oid = (args.official_id or "").strip()
+        if oid and result.requires_human_review:
+            settings = get_settings()
+            from briefing.services.alerts.dispatcher import AlertDispatcher
+
+            disp = AlertDispatcher.try_from_settings(settings)
+            if disp:
+                disp.notify_adversarial_review(oid, groundedness=result.groundedness_score)
     return 0
 
 

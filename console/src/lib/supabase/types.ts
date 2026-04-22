@@ -12,6 +12,9 @@ export type Database = {
           id: string;
           name: string;
           slug: string;
+          level: string;
+          parent_id: string | null;
+          state_code: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -90,6 +93,20 @@ export type Database = {
         Update: Record<string, never>;
         Relationships: [];
       };
+      entities: {
+        Row: {
+          id: string;
+          type: string;
+          canonical_name: string;
+          external_ids: Json;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       alerts: {
         Row: {
           id: string;
@@ -101,8 +118,21 @@ export type Database = {
           delivered_at: string | null;
           read_at: string | null;
         };
-        Insert: Record<string, never>;
-        Update: Record<string, never>;
+        Insert: {
+          id?: string;
+          org_id: string;
+          kind: string;
+          target_type: string;
+          target_id: string;
+          payload?: Json;
+          delivered_at?: string | null;
+          read_at?: string | null;
+        };
+        Update: {
+          read_at?: string | null;
+          delivered_at?: string | null;
+          payload?: Json;
+        };
         Relationships: [];
       };
       user_saved_views: {
@@ -128,6 +158,49 @@ export type Database = {
           kind?: string;
           query?: Json;
         };
+        Relationships: [];
+      };
+      opinions: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          court: string | null;
+          published: boolean;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      bills: {
+        Row: {
+          id: string;
+          bill_number: string;
+          title: string;
+          published: boolean;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      media_coverage: {
+        Row: {
+          id: string;
+          headline: string;
+          source_url: string | null;
+          published: boolean;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
         Relationships: [];
       };
     };

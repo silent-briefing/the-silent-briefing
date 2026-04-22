@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { JusticeCard } from "@/components/operator/judicial/JusticeCard";
+import { JudicialRosterEmpty } from "@/components/operator/judicial/JudicialRosterEmpty";
 import { listUtByOfficeType } from "@/lib/queries/officials";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -29,9 +30,12 @@ export default async function JudicialDistrictPage() {
       </p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {judges.length === 0 ? (
-          <p className="sm:col-span-2 lg:col-span-3 rounded-[var(--radius-lg)] bg-surface-1 p-6 font-sans text-sm text-[var(--fg-3)] shadow-[var(--shadow-sm)]">
-            No district judges in database yet.
-          </p>
+          <div className="sm:col-span-2 lg:col-span-3">
+            <JudicialRosterEmpty
+              rosterDescription="Utah district court judges"
+              officeType="state_district_judge"
+            />
+          </div>
         ) : (
           judges.map((o) => <JusticeCard key={o.id} official={o} />)
         )}

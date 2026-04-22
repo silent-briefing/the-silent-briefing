@@ -3,6 +3,7 @@
 .env.local
 .env.*
 !.env.example
+!console/.env.development
 cms/.env
 
 # Python / uv

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { JusticeCard } from "@/components/operator/judicial/JusticeCard";
+import { JudicialRosterEmpty } from "@/components/operator/judicial/JudicialRosterEmpty";
 import { listUtSupremeCourt } from "@/lib/queries/officials";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -30,9 +31,10 @@ export default async function JudicialSupremeCourtPage() {
       <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-8">
           {justices.length === 0 ? (
-            <p className="rounded-[var(--radius-lg)] bg-surface-1 p-6 font-sans text-sm text-[var(--fg-3)] shadow-[var(--shadow-sm)]">
-              No justices returned. Run judicial extraction against local Supabase or check RLS / JWT.
-            </p>
+            <JudicialRosterEmpty
+              rosterDescription="Utah Supreme Court justices"
+              officeType="state_supreme_justice"
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {justices.map((o) => (

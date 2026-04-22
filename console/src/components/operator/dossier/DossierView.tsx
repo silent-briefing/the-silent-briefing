@@ -4,6 +4,7 @@ import { getBySlug } from "@/lib/queries/officials";
 import { getJurisdictionLabel } from "@/lib/queries/jurisdictions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+import { DossierBookmarkButton } from "./DossierBookmarkButton";
 import { DossierHeader } from "./DossierHeader";
 import { DossierTabsShell } from "./DossierTabsShell";
 
@@ -22,7 +23,18 @@ export async function DossierView({ slug, parentNav }: DossierViewProps) {
 
   return (
     <div className="max-w-5xl">
-      <DossierHeader official={official} jurisdictionName={jurisdictionName} parentNav={parentNav} />
+      <DossierHeader
+        official={official}
+        jurisdictionName={jurisdictionName}
+        parentNav={parentNav}
+        actions={
+          <DossierBookmarkButton
+            slug={official.slug}
+            officeType={official.office_type}
+            fullName={official.full_name}
+          />
+        }
+      />
       <div className="py-10">
         <DossierTabsShell
           officialId={official.id}

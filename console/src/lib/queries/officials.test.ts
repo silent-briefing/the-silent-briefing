@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { getBySlug, listSupremeCourt } from "./officials";
+import { getBySlugs, getBySlug, listOfficialsFiltered, listSupremeCourt } from "./officials";
+import { defaultOfficialsUrlFilters } from "./officials-url-filters";
 import { createSupabaseQueryMock } from "./test-utils";
 
 const sampleOfficial = {
@@ -35,5 +36,22 @@ describe("officials queries", () => {
     const client = createSupabaseQueryMock({ data: sampleOfficial, error: null });
     const row = await getBySlug(client, "justice-hagen");
     expect(row?.full_name).toBe("Justice Hagen");
+  });
+
+  it("listOfficialsFiltered queries with filters", async () => {
+    const client = createSupabaseQueryMock({ data: [sampleOfficial], error: null });
+    const rows = await listOfficialsFiltered(client, {
+      ...defaultOfficialsUrlFilters(),
+      officeType: "state_supreme_justice",
+    });
+    expect(rows).toHaveLength(1);
+    expect(client.from).toHaveBeenCalledWith("officials");
+  });
+
+  it("getBySlugs preserves order", async () => {
+    const second = { ...sampleOfficial, id: "550e8400-e29b-41d4-a716-446655440099", slug: "justice-b" };
+    const client = createSupabaseQueryMock({ data: [second, sampleOfficial], error: null });
+    const rows = await getBySlugs(client, ["justice-hagen", "justice-b"]);
+    expect(rows.map((r) => r.slug)).toEqual(["justice-hagen", "justice-b"]);
   });
 });

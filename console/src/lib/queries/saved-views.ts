@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { throwIfPostgrestError } from "@/lib/supabase/postgrest-error";
 import type { Database, Json } from "@/lib/supabase/types";
 
 import {
@@ -16,14 +17,18 @@ function parseViews(data: unknown): UserSavedViewRow[] {
 export async function listUserSavedViews(
   supabase: SupabaseClient<Database>,
   userId: string,
+  opts?: { orgId?: string },
 ): Promise<UserSavedViewRow[]> {
-  const { data, error } = await supabase
+  let q = supabase
     .from("user_saved_views")
     .select("id, user_id, org_id, name, kind, query, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+    .eq("user_id", userId);
+  if (opts?.orgId) {
+    q = q.eq("org_id", opts.orgId);
+  }
+  const { data, error } = await q.order("created_at", { ascending: false });
 
-  if (error) throw error;
+  throwIfPostgrestError(error);
   return parseViews(data);
 }
 
@@ -53,7 +58,7 @@ export async function createSavedView(
     .select("id, user_id, org_id, name, kind, query, created_at")
     .single();
 
-  if (error) throw error;
+  throwIfPostgrestError(error);
   return userSavedViewRowSchema.parse(data);
 }
 
@@ -76,11 +81,11 @@ export async function updateSavedView(
     .select("id, user_id, org_id, name, kind, query, created_at")
     .single();
 
-  if (error) throw error;
+  throwIfPostgrestError(error);
   return userSavedViewRowSchema.parse(data);
 }
 
 export async function deleteSavedView(supabase: SupabaseClient<Database>, id: string): Promise<void> {
   const { error } = await supabase.from("user_saved_views").delete().eq("id", id);
-  if (error) throw error;
+  throwIfPostgrestError(error);
 }

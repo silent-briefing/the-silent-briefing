@@ -35,11 +35,17 @@ export default function JudicialWatchLandingPage() {
         Cross-linked rosters per Palantir-style navigation. Pick a court; dossiers open from each
         justice card.
       </p>
-      <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <p className="mt-6 max-w-2xl font-sans text-xs leading-relaxed text-[var(--fg-4)]">
+        Each card navigates to a Utah-scoped roster. If you land on a page with no names, the UI is
+        still working — local Supabase likely needs judicial extraction or RLS/JWT configuration (see
+        the empty-state checklist on that page).
+      </p>
+      <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {hubs.map(({ href, title, blurb, icon: Icon }) => (
           <li key={href}>
             <Link
               href={href}
+              prefetch
               className="group flex h-full flex-col rounded-[var(--radius-lg)] bg-surface-1 p-6 shadow-[var(--shadow-sm)] ring-1 ring-transparent transition-shadow hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface)]"
             >
               <Icon

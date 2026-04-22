@@ -1,9 +1,19 @@
 "use client";
 
-export function GraphPanel() {
+import { EntityGraph } from "@/components/operator/graph/EntityGraph";
+
+export type GraphPanelProps = {
+  officialId: string;
+  entityId: string | null | undefined;
+  fetchEnabled: boolean;
+};
+
+export function GraphPanel({ officialId, entityId, fetchEnabled }: GraphPanelProps) {
+  if (!fetchEnabled) return null;
+
   return (
-    <p className="font-sans text-sm text-[var(--fg-3)]">
-      Entity graph (React Flow) lands with Phase B.7 — accepted edges only.
-    </p>
+    <section aria-label="Entity graph">
+      <EntityGraph key={`${officialId}:${entityId ?? ""}`} rootEntityId={entityId ?? null} />
+    </section>
   );
 }

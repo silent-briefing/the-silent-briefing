@@ -1,0 +1,31 @@
+/* Phase B.9 — print / PDF export for comparison matrix */
+@media print {
+  @page {
+    margin: 1.2cm;
+  }
+
+  .compare-no-print {
+    display: none !important;
+  }
+
+  .compare-matrix-root {
+    background: white !important;
+    color: #000f22 !important;
+    max-width: none !important;
+  }
+
+  .compare-matrix-panel {
+    break-inside: avoid;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    box-shadow: none !important;
+  }
+
+  .compare-matrix-panel h2,
+  .compare-matrix-panel .compare-headline {
+    font-family: "Newsreader", Georgia, serif !important;
+  }
+
+  .compare-matrix-panel .compare-body {
+    font-variant-numeric: tabular-nums;
+  }
+}

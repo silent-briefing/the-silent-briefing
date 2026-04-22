@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     # Clerk JWT for BFF (`Authorization: Bearer` session token). Issuer + JWKS URL from Clerk dashboard.
     clerk_jwt_issuer: str = ""
     clerk_jwks_url: str = ""
+    # Operator feeds (Phase B.11): X API v2 bearer; Perplexity fills gaps when unset.
+    x_api_bearer_token: str = ""
+    # TTL for cached feed payloads per official (seconds). 0 disables caching.
+    feed_cache_seconds: int = Field(default=600, ge=0)
+    # Clerk org id (e.g. org_...) for worker-created alerts when officials have no per-org row.
+    alerts_default_org_id: str = ""
 
 
 @lru_cache
