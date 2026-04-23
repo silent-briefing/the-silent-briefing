@@ -111,6 +111,7 @@ class TriggerIntelRunBody(BaseModel):
     min_confidence: float | None = None
     retention_slugs: str | None = None
     opinion_limit: int | None = None
+    opinion_id: str | None = None
     no_embed: bool = False
     no_correlate: bool = False
 

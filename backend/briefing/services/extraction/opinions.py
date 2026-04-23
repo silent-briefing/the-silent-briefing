@@ -16,12 +16,19 @@ from bs4 import BeautifulSoup
 from pypdf import PdfReader
 
 from briefing.config import Settings, get_settings
+from briefing.services.settings import merge_source_urls_from_db
 from briefing.services.extraction.judicial import fetch_sup_html
 from briefing.services.llm.perplexity import PerplexityLLMService
 
 SOURCE_TYPE = "ut_supreme_opinion"
+ADMIN_UPLOAD_SOURCE_TYPE = "admin_opinion_pdf"
 _CHUNK_TARGET_CHARS = 3600
 _CHUNK_OVERLAP = 400
+
+
+def briefing_opinion_source_url(opinion_id: str) -> str:
+    """Stable virtual URL for admin-uploaded opinion PDFs (matches ``rag_chunks.source_url``)."""
+    return f"briefing://opinions/{opinion_id}/document.pdf"
 
 
 @dataclass(frozen=True)
@@ -135,6 +142,9 @@ def persist_opinion_chunks(
     embeddings: list[list[float]] | None,
     embedding_model_id: str | None,
     settings: Settings,
+    *,
+    source_type: str | None = None,
+    chunk_metadata_extra: dict[str, Any] | None = None,
 ) -> int:
     if not settings.supabase_url or not settings.supabase_service_role_key:
         msg = "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required for persist"
@@ -147,21 +157,25 @@ def persist_opinion_chunks(
     client = create_client(settings.supabase_url, settings.supabase_service_role_key)
     _delete_chunks_for_source(client, ref.pdf_url)
     inserted = 0
+    st = source_type or SOURCE_TYPE
+    base_meta: dict[str, Any] = {
+        "case_name": ref.case_name,
+        "filed_yyyymmdd": ref.filed_yyyymmdd,
+        "court": "ut_supreme",
+    }
+    if chunk_metadata_extra:
+        base_meta = {**base_meta, **chunk_metadata_extra}
     for idx, content in enumerate(chunks):
         row: dict[str, Any] = {
             "content": content,
             "source_url": ref.pdf_url,
-            "source_type": SOURCE_TYPE,
+            "source_type": st,
             "chunk_index": idx,
             "content_hash": _content_hash(content),
             "embedding_model_id": embedding_model_id,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
             "chunk_version": 1,
-            "metadata": {
-                "case_name": ref.case_name,
-                "filed_yyyymmdd": ref.filed_yyyymmdd,
-                "court": "ut_supreme",
-            },
+            "metadata": base_meta,
         }
         if embeddings:
             row["embedding"] = embeddings[idx]
@@ -180,7 +194,7 @@ def run_opinion_ingestion(
     settings: Settings | None = None,
 ) -> tuple[list[OpinionRef], int, int, int]:
     """Return (refs, total_chunks, rows_persisted, correlation_edges_inserted)."""
-    cfg = settings or get_settings()
+    cfg = merge_source_urls_from_db(settings or get_settings())
     refs = list_ut_supreme_opinion_pdfs(
         limit=limit,
         user_agent=cfg.http_user_agent,
@@ -269,3 +283,133 @@ def run_opinion_ingestion(
         raise RuntimeError(msg)
     validate_golden_opinion_chunks(total_chunks)
     return refs, total_chunks, persisted, correlation_edges_inserted
+
+
+def run_uploaded_opinion_ingestion(
+    *,
+    opinion_id: str,
+    persist: bool = False,
+    dry_run: bool = False,
+    embed: bool = True,
+    correlate_after_persist: bool = True,
+    settings: Settings | None = None,
+) -> tuple[int, int, int]:
+    """Ingest one admin-uploaded PDF from Storage (``opinions-pdf``) into ``rag_chunks``."""
+    cfg = merge_source_urls_from_db(settings or get_settings())
+    if not cfg.supabase_url or not cfg.supabase_service_role_key:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required")
+    from supabase import create_client
+
+    client = create_client(cfg.supabase_url, cfg.supabase_service_role_key)
+
+    def _set_status(st: str) -> None:
+        client.table("opinions").update({"ingestion_status": st}).eq("id", opinion_id).execute()
+
+    res = (
+        client.table("opinions")
+        .select("id,title,pdf_storage_path,metadata")
+        .eq("id", opinion_id)
+        .limit(1)
+        .execute()
+    )
+    rows = res.data or []
+    if not rows:
+        raise RuntimeError(f"opinion not found: {opinion_id}")
+    row = rows[0]
+    path = (row.get("pdf_storage_path") or "").strip()
+    title = str(row.get("title") or "Opinion")
+    meta_row = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+    filed: str | None = None
+    if isinstance(meta_row, dict):
+        raw_filed = meta_row.get("filed_yyyymmdd")
+        if isinstance(raw_filed, str):
+            filed = raw_filed
+
+    if not path:
+        raise RuntimeError("opinion has no pdf_storage_path")
+
+    if persist and not dry_run:
+        _set_status("processing")
+
+    try:
+        pdf_bytes = client.storage.from_("opinions-pdf").download(path)
+    except Exception as e:
+        if persist and not dry_run:
+            _set_status("failed")
+        raise RuntimeError(f"storage download failed: {e}") from e
+
+    synthetic_url = briefing_opinion_source_url(opinion_id)
+    ref = OpinionRef(case_name=title, pdf_url=synthetic_url, filed_yyyymmdd=filed)
+    text = extract_pdf_text(pdf_bytes)
+    chunks = chunk_text(text, max_chars=_CHUNK_TARGET_CHARS, overlap=_CHUNK_OVERLAP)
+    if not chunks:
+        if persist and not dry_run:
+            _set_status("failed")
+        raise RuntimeError("no text extracted from PDF")
+
+    total_chunks = len(chunks)
+    persisted = 0
+    correlation_edges_inserted = 0
+
+    if dry_run:
+        return total_chunks, 0, 0
+
+    llm_embed: PerplexityLLMService | None = None
+    if embed:
+        llm_embed = PerplexityLLMService(cfg)
+
+    correlation_llm: PerplexityLLMService | None = None
+    if persist and correlate_after_persist:
+        if llm_embed is not None:
+            correlation_llm = llm_embed
+        else:
+            try:
+                correlation_llm = PerplexityLLMService(cfg)
+            except ValueError:
+                print(
+                    "opinion-ingestion: PERPLEXITY_API_KEY missing; skipping post-persist correlation",
+                    file=sys.stderr,
+                )
+
+    vectors: list[list[float]] | None = None
+    if embed and llm_embed is not None:
+        vectors = llm_embed.embed_texts(chunks)
+
+    if persist:
+        try:
+            persisted = persist_opinion_chunks(
+                ref,
+                chunks,
+                vectors,
+                cfg.embedding_model_id if embed else None,
+                cfg,
+                source_type=ADMIN_UPLOAD_SOURCE_TYPE,
+                chunk_metadata_extra={"opinion_id": opinion_id, "court": "admin_upload"},
+            )
+        except Exception:
+            _set_status("failed")
+            raise
+        if correlation_llm is not None:
+            from briefing.services.llm.correlation import run_correlation_pass
+
+            text_blob = "\n\n".join(chunks)
+            ctx = f"admin_opinion id={opinion_id} case={title}"
+            try:
+                cr = run_correlation_pass(
+                    correlation_llm,
+                    text=text_blob,
+                    context=ctx,
+                    persist=True,
+                    dry_run=False,
+                    min_confidence=0.8,
+                    settings=cfg,
+                )
+                correlation_edges_inserted = cr.inserted
+            except Exception as e:
+                print(
+                    f"opinion-ingestion: correlation failed for opinion {opinion_id}: {e}",
+                    file=sys.stderr,
+                )
+        _set_status("ready")
+
+    return total_chunks, persisted, correlation_edges_inserted

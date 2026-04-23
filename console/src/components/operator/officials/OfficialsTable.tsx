@@ -59,8 +59,8 @@ export function OfficialsTable({ rows, jurisdictionLabels, className }: Official
                 tabIndex={0}
                 className={cn(
                   "absolute left-0 right-0 grid cursor-pointer grid-cols-12 gap-2 border-b border-[rgba(0,15,34,0.06)] px-4 py-3 font-sans text-sm text-[var(--fg-2)] outline-none transition-colors",
-                  "hover:bg-[rgba(212,175,55,0.06)] hover:shadow-[inset_3px_0_0_var(--tertiary)]",
-                  "focus-visible:bg-[rgba(212,175,55,0.08)] focus-visible:shadow-[inset_3px_0_0_var(--tertiary)] focus-visible:ring-2 focus-visible:ring-[var(--tertiary)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-1)]",
+                  "hover:bg-[rgba(212,175,55,0.06)] hover:shadow-[inset_3px_0_0_var(--tertiary)] motion-reduce:hover:shadow-none",
+                  "focus-visible:bg-[rgba(212,175,55,0.08)] focus-visible:shadow-[inset_3px_0_0_var(--tertiary)] motion-reduce:focus-visible:shadow-none focus-visible:ring-2 focus-visible:ring-[var(--tertiary)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-1)]",
                 )}
                 style={{ transform: `translateY(${vi.start}px)` }}
                 onClick={() => router.push(`/officials/${o.slug}`)}

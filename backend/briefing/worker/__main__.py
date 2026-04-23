@@ -51,6 +51,30 @@ def _cmd_retention_extraction(args: argparse.Namespace) -> int:
 
 
 def _cmd_opinion_ingestion(args: argparse.Namespace) -> int:
+    oid = (getattr(args, "opinion_id", None) or "").strip()
+    if oid:
+        from briefing.services.extraction.opinions import run_uploaded_opinion_ingestion
+
+        try:
+            n_chunks, persisted, corr_ins = run_uploaded_opinion_ingestion(
+                opinion_id=oid,
+                persist=args.persist,
+                dry_run=args.dry_run,
+                embed=not args.no_embed,
+                correlate_after_persist=not args.no_correlate,
+            )
+        except Exception as e:
+            print(f"opinion-ingestion failed: {e}", file=sys.stderr)
+            return 1
+        print(f"Uploaded opinion {oid}: chunks={n_chunks}")
+        if args.dry_run:
+            print("(dry-run: no embeddings or database writes)")
+        elif args.persist:
+            print(f"Inserted {persisted} rag_chunks row(s).")
+            if not args.no_correlate:
+                print(f"Correlation: inserted {corr_ins} entity_edges row(s) (high-confidence proposals).")
+        return 0
+
     from briefing.services.extraction.opinions import run_opinion_ingestion
 
     try:
@@ -461,6 +485,12 @@ def _dispatch_command() -> int:
     oi = sub.add_parser(
         "opinion-ingestion",
         help="UT Supreme PDF opinions → chunked text → Perplexity embeddings → rag_chunks",
+    )
+    oi.add_argument(
+        "--opinion-id",
+        type=str,
+        default="",
+        help="Ingest a single admin-uploaded opinion (public.opinions.id) from Storage bucket opinions-pdf",
     )
     oi.add_argument(
         "--limit",

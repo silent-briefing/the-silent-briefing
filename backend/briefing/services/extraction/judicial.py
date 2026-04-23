@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
 from briefing.config import Settings, get_settings
+from briefing.services.settings import merge_source_urls_from_db
 
 
 @dataclass(frozen=True)
@@ -197,7 +198,7 @@ def run_ut_supreme_extraction(
     fetch_bios: bool = True,
     settings: Settings | None = None,
 ) -> list[JusticeRow]:
-    cfg = settings or get_settings()
+    cfg = merge_source_urls_from_db(settings or get_settings())
     html = fetch_sup_html(cfg.utcourts_supreme_roster_url, cfg.http_user_agent)
     rows = parse_ut_supreme_roster(html, site_origin=cfg.utcourts_site_origin)
     if not rows:

@@ -10,6 +10,7 @@ from typing import Any
 from briefing.config import Settings, get_settings
 from briefing.services.feeds.feed_sources import PerplexityNewsSource, XSource
 from briefing.services.feeds.feed_types import FeedItemOut, OfficialFeedContext
+from briefing.services.settings.resolver import FeedPolicy, resolve_operator_feeds
 
 _CACHE: dict[str, tuple[float, tuple[FeedItemOut, ...]]] = {}
 _CACHE_LOCK = threading.Lock()
@@ -50,10 +51,18 @@ class FeedService:
     def __init__(self, settings: Settings | None = None) -> None:
         self._s = settings or get_settings()
 
-    def collect(self, ctx: OfficialFeedContext) -> list[FeedItemOut]:
+    def collect(self, ctx: OfficialFeedContext, policy: FeedPolicy | None = None) -> list[FeedItemOut]:
+        p = policy or FeedPolicy(
+            cache_seconds=max(0, self._s.feed_cache_seconds),
+            x_enabled=True,
+            perplexity_enabled=True,
+            opt_out_official_ids=frozenset(),
+        )
         parts: list[FeedItemOut] = []
-        parts.extend(XSource(self._s).fetch(ctx))
-        parts.extend(PerplexityNewsSource(self._s).fetch(ctx))
+        if p.x_enabled:
+            parts.extend(XSource(self._s).fetch(ctx))
+        if p.perplexity_enabled:
+            parts.extend(PerplexityNewsSource(self._s).fetch(ctx))
         return _merge_sort_dedupe(parts)
 
 
@@ -79,10 +88,14 @@ def _cache_set(official_id: str, items: list[FeedItemOut]) -> None:
 
 def load_and_fetch_feed_items(settings: Settings, supabase: Any, official_id: str) -> list[FeedItemOut] | None:
     """Return feed items, or ``None`` if the official does not exist."""
-    ttl = settings.feed_cache_seconds
+    policy = resolve_operator_feeds(settings, supabase)
+    ttl = policy.cache_seconds
     cached = _cache_get(official_id, ttl)
     if cached is not None:
         return cached
+
+    if official_id in policy.opt_out_official_ids:
+        return []
 
     res = (
         supabase.table("officials")
@@ -108,7 +121,7 @@ def load_and_fetch_feed_items(settings: Settings, supabase: Any, official_id: st
         office_type=str(row["office_type"]),
         jurisdiction_name=str(jname) if jname else None,
     )
-    items = FeedService(settings).collect(ctx)
+    items = FeedService(settings).collect(ctx, policy=policy)
     if ttl > 0:
         _cache_set(official_id, items)
     return items

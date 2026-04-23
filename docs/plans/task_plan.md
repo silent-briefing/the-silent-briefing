@@ -60,8 +60,8 @@
 | Phase | Status | Owner | Depends on | Gate to next |
 |---|---|---|---|---|
 | **A — Console foundation** | **complete** | A.1–A.11 shipped | Clerk JWT template (exists), `authenticated` RLS tranche (exists), GUI tables migration | Clerk sign-in works; `/` loads design tokens; `proxy.ts` + Supabase clients + app shell + shadcn primitives + BFF client + `/v1/admin/health`; `gui-ci.yml` green; README/CLAUDE/AGENTS updated |
-| **B — Operator console** | in_progress | B.1 shipped | A | All 10 operator surfaces shippable; Playwright smoke green |
-| **C — Admin console** | pending | — | A | All 10 admin concerns CRUD-complete; mutations audit-logged; BFF tests green |
+| **B — Operator console** | **complete** | B.1–B.14 shipped (2026-04-21) | A | Operator routes + BFF feeds/search/alerts; axe/Lighthouse gates in CI; see `progress.md` |
+| **C — Admin console** | in_progress | C.1 shipped (2026-04-22) | A | All 10 admin concerns CRUD-complete; mutations audit-logged; BFF tests green |
 | **D — Directus sunset** | pending | — | C | Parity audit signed off; Directus container stopped; docs updated |
 
 B and C may run in parallel as two subagent streams once A ships.
@@ -136,6 +136,7 @@ Clerk Organizations enabled; `org:admin` Clerk system role maps to app `admin`; 
 | 2026-04-22 | Phase B.6 (overview tranche): Overview tab shows jurisdiction, office, status, retention, alignment, biography (`OfficialCardRow` + `jurisdictionName` from server); `section` + Playwright assert; Vitest `overview-format.test.ts` |
 | 2026-04-22 | Phase B.6 (adversarial tranche): Adversarial tab loads `getAdversarialFlags` on activation; `groundedness_score` on claim row + metadata critique/synthesis extractors; split-view `AdversarialIssueCard`; Vitest `adversarial-display.test.ts`; Playwright Hagen → Adversarial |
 | 2026-04-22 | Phase B.6 (feed tranche): `GET /v1/console/feeds/{official_id}` (Clerk + official 404 check, empty `items` until B.11); `FeedPanel` + `FeedItemRow`, React Query + `fetchOfficialFeedsViaBff`; pytest + Playwright |
+| 2026-04-22 | Phase C.1: `AdminNav` / `AdminHeader` / `MutationConfirm`; dashboard tiles + `fetchAdminDashboardStats`; stub routes `/admin/*` concerns; `briefing/services/audit/log.py` (`insert_audit_row`, `write_audit_via_service_role`) + `tests/test_audit_log_service.py`; `Sidebar` optional `iconSize: md` (20px) for admin |
 | 2026-04-22 | Phase B.8: `/officials` hub — URL-synced filters (`officials-url-filters`), `listOfficialsFiltered` + `listJurisdictionOptions`, virtualized `OfficialsTable` (gold inset hover), `OfficialsHub` + saved views (`user_saved_views`, Clerk org fallback), sidebar enabled; axe + Lighthouse routes extended |
 | 2026-04-22 | Phase B.9: `/compare` — `CompareHub` + command `ComparePicker` (2–4 slugs, `?s=` CSV), `CompareMatrix` dossier summaries, `computeSharedSlugPairs` direct accepted entity edges → gold pinstripe + label, `compare-print.css`, `getBySlugs` + lexical search uses full `OFFICIAL_CARD_COLUMNS`; sidebar Compare enabled; axe/Lighthouse/e2e |
 

@@ -72,3 +72,58 @@ export async function bffJson<T>({
 
   return schema.parse(raw);
 }
+
+export type BffFormDataArgs<T> = {
+  path: string;
+  method?: "POST";
+  formData: FormData;
+  getToken: () => Promise<string | null>;
+  schema: ZodType<T>;
+};
+
+/**
+ * Authenticated multipart/form-data POST (no manual Content-Type; boundary is set by the runtime).
+ */
+export async function bffFormData<T>({
+  path,
+  method = "POST",
+  formData,
+  getToken,
+  schema,
+}: BffFormDataArgs<T>): Promise<T> {
+  const base = bffBaseUrl();
+  if (!base) {
+    throw new Error("NEXT_PUBLIC_BFF_BASE_URL is not set");
+  }
+  const token = await getToken();
+  if (!token) {
+    throw new Error("Not signed in");
+  }
+
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  let raw: unknown;
+  const text = await res.text();
+  try {
+    raw = text ? JSON.parse(text) : null;
+  } catch {
+    raw = text;
+  }
+
+  if (!res.ok) {
+    throw new BffHttpError(
+      `BFF ${method} ${path} failed (${res.status})`,
+      res.status,
+      raw,
+    );
+  }
+
+  return schema.parse(raw);
+}

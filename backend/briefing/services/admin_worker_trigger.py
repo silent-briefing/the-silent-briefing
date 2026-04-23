@@ -154,9 +154,12 @@ def build_worker_argv(*, job_id: str, payload: dict[str, Any]) -> list[str]:
         return argv
 
     if job_id == "opinion-ingestion":
+        oid = (payload.get("opinion_id") or "").strip()
+        if oid:
+            argv += ["--opinion-id", oid]
         argv.append("--persist")
         limit = payload.get("opinion_limit")
-        if limit is not None:
+        if limit is not None and not oid:
             argv += ["--limit", str(int(limit))]
         if payload.get("no_embed"):
             argv.append("--no-embed")

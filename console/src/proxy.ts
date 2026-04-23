@@ -1,7 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { roleFromSessionClaims } from "@/lib/auth/guards";
+import {
+  roleFromClerkOrganizationClaims,
+  roleFromPublicAndUserClaims,
+  roleFromSessionClaims,
+} from "@/lib/auth/guards";
 import { roleAtLeast, type Role } from "@/lib/auth/roles";
 
 const isPublicRoute = createRouteMatcher([
@@ -26,7 +30,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   await auth.protect();
 
-  const { sessionClaims } = await auth();
+  const { sessionClaims, orgRole } = await auth();
   const rawRole = roleFromSessionClaims(sessionClaims);
   const effectiveRole: Role = rawRole ?? "viewer";
 
@@ -37,7 +41,11 @@ export default clerkMiddleware(async (auth, req) => {
           event: "role_denied",
           path: req.nextUrl.pathname,
           required: "admin",
-          actual: rawRole ?? null,
+          effective_role: effectiveRole,
+          from_public_metadata: roleFromPublicAndUserClaims(sessionClaims) ?? null,
+          from_org_claims: roleFromClerkOrganizationClaims(sessionClaims) ?? null,
+          clerk_auth_org_role: orgRole ?? null,
+          hint: "Set user public_metadata.role, or use Clerk org Admin with that org active in the session",
         }),
       );
       return NextResponse.redirect(new URL("/?denied=admin-required", req.url));

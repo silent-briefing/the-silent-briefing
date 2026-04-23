@@ -25,7 +25,7 @@ export default async function JudicialSupremeCourtPage() {
         Justices
       </h1>
       <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[var(--fg-3)]">
-        Current roster — select a justice for the dossier. Teasers and opinions wire in Phase B.6.
+        Current roster — select a justice for the dossier. Teasers and deeper opinion surfacing are still rolling out.
       </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-8">

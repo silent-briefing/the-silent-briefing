@@ -102,7 +102,7 @@ export function DossierTabsShell({
         value="adversarial"
         id="dossier-panel-adversarial"
         tabIndex={-1}
-        className="mt-0 max-w-5xl outline-none"
+        className="mt-0 max-w-5xl outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
       >
         <section aria-label="Adversarial review">
           <AdversarialPanel officialId={officialId} fetchEnabled={tab === "adversarial"} />

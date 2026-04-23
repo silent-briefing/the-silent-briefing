@@ -29,3 +29,24 @@ def test_build_argv_retrieval() -> None:
     assert "--official-id" in argv
     assert "--persist" in argv
     assert "--correlate" in argv
+
+
+def test_build_argv_opinion_ingestion_upload_scoped() -> None:
+    argv = build_worker_argv(
+        job_id="opinion-ingestion",
+        payload={"opinion_id": "11111111-1111-4111-8111-111111111111", "opinion_limit": 99},
+    )
+    assert argv[0] == "opinion-ingestion"
+    assert argv == [
+        "opinion-ingestion",
+        "--opinion-id",
+        "11111111-1111-4111-8111-111111111111",
+        "--persist",
+    ]
+
+
+def test_build_argv_opinion_ingestion_index_limit() -> None:
+    argv = build_worker_argv(job_id="opinion-ingestion", payload={"opinion_limit": 7})
+    assert "--limit" in argv
+    assert "7" in argv
+    assert "--opinion-id" not in argv

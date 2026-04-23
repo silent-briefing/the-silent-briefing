@@ -68,6 +68,10 @@ export type Database = {
           groundedness_score: string | null;
           metadata: Json;
           published: boolean;
+          requires_human_review: boolean;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          review_note: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -193,8 +197,14 @@ export type Database = {
         Row: {
           id: string;
           headline: string;
+          outlet: string | null;
           source_url: string | null;
+          summary: string | null;
           published: boolean;
+          published_at: string | null;
+          fetched_at: string | null;
+          created_by: string | null;
+          official_ids: string[];
           metadata: Json;
           created_at: string;
           updated_at: string;

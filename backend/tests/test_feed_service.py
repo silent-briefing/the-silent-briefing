@@ -102,6 +102,8 @@ def test_load_and_fetch_uses_cache_on_second_call() -> None:
 
     def table_side(name: str) -> MagicMock:
         t = MagicMock()
+        if name == "settings":
+            t.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(data=[])
         if name == "officials":
             t.select.return_value.eq.return_value.is_.return_value.limit.return_value.execute.return_value = MagicMock(
                 data=[
@@ -129,8 +131,41 @@ def test_load_and_fetch_uses_cache_on_second_call() -> None:
 
 def test_load_and_fetch_missing_official() -> None:
     settings = Settings(feed_cache_seconds=0)
+
+    def table_side(name: str) -> MagicMock:
+        t = MagicMock()
+        if name == "settings":
+            t.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(data=[])
+        if name == "officials":
+            t.select.return_value.eq.return_value.is_.return_value.limit.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+        return t
+
     client = MagicMock()
-    client.table.return_value.select.return_value.eq.return_value.is_.return_value.limit.return_value.execute.return_value = MagicMock(
-        data=[]
-    )
+    client.table.side_effect = table_side
     assert load_and_fetch_feed_items(settings, client, "550e8400-e29b-41d4-a716-446655440000") is None
+
+
+def test_load_and_fetch_opt_out_skips_collect() -> None:
+    settings = Settings(
+        supabase_url="http://127.0.0.1:54321",
+        supabase_service_role_key="sr",
+        feed_cache_seconds=0,
+    )
+    oid = "550e8400-e29b-41d4-a716-446655440000"
+
+    def table_side(name: str) -> MagicMock:
+        t = MagicMock()
+        if name == "settings":
+            t.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+                data=[{"value": {"opt_out_official_ids": [oid]}}]
+            )
+        return t
+
+    client = MagicMock()
+    client.table.side_effect = table_side
+    with patch.object(FeedService, "collect") as coll:
+        out = load_and_fetch_feed_items(settings, client, oid)
+    assert out == []
+    coll.assert_not_called()

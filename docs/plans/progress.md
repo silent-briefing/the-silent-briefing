@@ -183,6 +183,36 @@
 
 ---
 
+## 2026-04-21 — Phase B exit: B.13 accessibility + performance, B.14 docs
+
+**Phase / tasks:** `2026-04-20-gui-phase-b-operator-console.md` — B.13 (a11y + perf sweep), B.14 (docs + progress).
+
+**What shipped:**
+- **B.13:** Parity focus ring on dossier Adversarial tab panel; `prefers-reduced-motion` suppresses gold inset pinstripe on officials roster rows; Playwright axe adds `/officials/justice-hagen`, runs `AxeBuilder` with **`iframes: false`** (app shell only) and **critical-impact** gate (hosted Clerk off-origin / embedded UI otherwise dominates); Lighthouse CI collects that URL, tightens accessibility floor (0.93) and LCP warn (3200ms) per `findings.md` §8; `gui-ci.yml` header notes blocking Lighthouse.
+- **B.14:** `task_plan.md` — Phase **B → complete**; this entry; `AGENTS.md` workspace facts synced.
+
+**Verification:** `cd console && bun run test && bun run typecheck && bun run lint` and `cd backend && uv run pytest -q` (run in session).
+
+**Next session:** Phase C admin console (`2026-04-20-gui-phase-c-admin-console.md`) or Bill P1 per trackers.
+
+---
+
+## 2026-04-22 — Phase C.1 admin shell + audit helper
+
+**Phase / tasks:** `2026-04-20-gui-phase-c-admin-console.md` — C.1 (navigation, dashboard tiles, audit module).
+
+**What shipped:**
+- Console: `AdminNav`, `AdminHeader` (breadcrumb + `NEXT_PUBLIC_DEPLOYMENT_ENV` / LOCAL|PROD badge), `MutationConfirm` (crimson `--secondary` destructive dialog), `AdminDashboardTiles` + `lib/admin/dashboard-stats.ts`, `lib/admin/nav-config.ts`, placeholders for ten concern routes; `admin-shell` composes new chrome; `Sidebar` supports **`iconSize: md`** (20px Lucide) for admin.
+- Backend: `briefing/services/audit/log.py` — **`insert_audit_row`** for same-transaction Postgres writes; **`write_audit_via_service_role`** for REST inserts; tests **`tests/test_audit_log_service.py`** (rollback + commit).
+- Types: `dossier_claims` Row adds **`requires_human_review`** for dashboard counts.
+- Plans: `task_plan.md` Phase **C → in_progress**; status log row.
+
+**Verification:** `cd backend && uv run pytest -q` → 81 passed; `cd console && bun run test && bun run typecheck && bun run lint` → green.
+
+**Next session:** Phase C.2 officials CRUD (BFF + table UI).
+
+---
+
 ## Template for future entries
 
 ```markdown

@@ -6,7 +6,7 @@ export function AuditLogFooter() {
       aria-label="Audit context"
     >
       <span>Session • UTC</span>
-      <span>Audit trail • Phase B</span>
+      <span>Audit trail • Full history in admin</span>
     </footer>
   );
 }

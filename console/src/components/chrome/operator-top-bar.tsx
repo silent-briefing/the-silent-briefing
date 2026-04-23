@@ -7,9 +7,9 @@ import type { ReactNode } from "react";
 import { AlertsBell } from "@/components/operator/alerts/AlertsBell";
 
 type Props = {
-  /** Extra actions to the left of the user menu (e.g. Phase B notifications). */
+  /** Extra actions to the left of the user menu (e.g. notifications). */
   trailing?: ReactNode;
-  /** Opens the global ⌘K search palette (Phase B.10). */
+  /** Opens the global ⌘K search palette. */
   onOpenSearch?: () => void;
 };
 
@@ -56,7 +56,7 @@ export function OperatorTopBar({ trailing, onOpenSearch }: Props) {
           className="rounded-[var(--radius-md)] p-2.5 text-[var(--fg-1)] transition-colors hover:bg-[rgba(0,15,34,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-4"
           aria-label="Audit log"
           disabled
-          title="Phase B"
+          title="Audit log — not available in this view"
         >
           <Clock className="size-[18px]" strokeWidth={1.5} />
         </button>

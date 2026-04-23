@@ -9,10 +9,14 @@ export type SidebarItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** When false, rendered as non-link placeholder (Phase B route). */
+  /** When false, rendered as a non-link placeholder. */
   enabled?: boolean;
+  /** Tooltip when `enabled === false` (defaults to “Coming soon”). */
+  disabledTitle?: string;
   /** Default: `/` is exact; other paths use prefix match. Set `exact` for e.g. `/admin` overview only. */
   match?: "exact" | "prefix";
+  /** Lucide icon box: default 18px (operator); `md` = 20px (Phase C admin nav). */
+  iconSize?: "default" | "md";
 };
 
 type Props = {
@@ -52,6 +56,8 @@ export function Sidebar({ brand, items, "aria-label": ariaLabel }: Props) {
       <nav className="flex flex-1 flex-col gap-0.5 px-3" aria-label={ariaLabel}>
         {items.map((it) => {
           const Icon = it.icon;
+          const iconCls =
+            it.iconSize === "md" ? "size-5 shrink-0" : "size-[18px] shrink-0";
           const active =
             it.enabled !== false &&
             (() => {
@@ -73,9 +79,9 @@ export function Sidebar({ brand, items, "aria-label": ariaLabel }: Props) {
               <span
                 key={it.label}
                 className={`${base} cursor-not-allowed opacity-45`}
-                title="Coming in Phase B"
+                title={it.disabledTitle ?? "Coming soon"}
               >
-                <Icon className="size-[18px] shrink-0 opacity-90" strokeWidth={1.5} aria-hidden />
+                <Icon className={`${iconCls} opacity-90`} strokeWidth={1.5} aria-hidden />
                 {it.label}
               </span>
             );
@@ -88,7 +94,7 @@ export function Sidebar({ brand, items, "aria-label": ariaLabel }: Props) {
               className={`${base} ${activeCls}`}
               prefetch={it.href !== "/"}
             >
-              <Icon className="size-[18px] shrink-0" strokeWidth={1.5} aria-hidden />
+              <Icon className={iconCls} strokeWidth={1.5} aria-hidden />
               {it.label}
             </Link>
           );

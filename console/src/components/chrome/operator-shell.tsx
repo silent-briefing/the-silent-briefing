@@ -28,9 +28,15 @@ const operatorNav: SidebarItem[] = [
   { href: "/search", label: "Search", icon: Search },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/alerts", label: "Alerts", icon: Bell },
-  { href: "/dossiers", label: "Dossiers", icon: FileText, enabled: false },
+  { href: "/admin/dossiers", label: "Dossiers", icon: FileText },
   { href: "/compare", label: "Compare", icon: GitCompare },
-  { href: "/archives", label: "Archives", icon: Archive, enabled: false },
+  {
+    href: "/archives",
+    label: "Archives",
+    icon: Archive,
+    enabled: false,
+    disabledTitle: "Not yet available",
+  },
 ];
 
 export function OperatorShell({ children }: { children: React.ReactNode }) {

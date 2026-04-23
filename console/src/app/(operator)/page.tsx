@@ -11,7 +11,12 @@ import {
 import { listUtSupremeCourt } from "@/lib/queries/officials";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export default async function BriefingHomePage() {
+export default async function BriefingHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ denied?: string }>;
+}) {
+  const { denied } = await searchParams;
   const supabase = await createServerSupabaseClient();
   const { getToken, orgId } = await auth();
 
@@ -51,6 +56,21 @@ export default async function BriefingHomePage() {
 
   return (
     <div>
+      {denied === "admin-required" ? (
+        <div
+          className="mb-6 rounded-lg border border-[var(--secondary)]/25 bg-[var(--secondary)]/5 px-4 py-3 font-sans text-sm text-[var(--fg-2)]"
+          role="status"
+        >
+          <p className="font-medium text-[var(--fg-1)]">Admin access required</p>
+          <p className="mt-1 text-[var(--fg-3)]">
+            Admin requires either{" "}
+            <span className="font-mono text-xs">public_metadata.role: &quot;admin&quot;</span> on your
+            Clerk user, or the{" "}
+            <span className="font-mono text-xs">Admin</span> role in a Clerk organization that is
+            currently active (use the org switcher). Then sign out and back in if claims look stale.
+          </p>
+        </div>
+      ) : null}
       <BriefingHero
         headlineDate={headlineDate}
         timestampLine={timestampLine}

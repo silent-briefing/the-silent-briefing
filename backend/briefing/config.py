@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     # Clerk JWT for BFF (`Authorization: Bearer` session token). Issuer + JWKS URL from Clerk dashboard.
     clerk_jwt_issuer: str = ""
     clerk_jwks_url: str = ""
+    # Clerk Backend API (Organizations / users) — **server-only**; never expose to the browser or Next.js bundle.
+    clerk_secret_key: str = ""
     # Operator feeds (Phase B.11): X API v2 bearer; Perplexity fills gaps when unset.
     x_api_bearer_token: str = ""
     # TTL for cached feed payloads per official (seconds). 0 disables caching.

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal
 
 from briefing.config import Settings, get_settings
+from briefing.services.settings import merge_source_urls_from_db
 from briefing.services.baseline.models import NormalizedCandidate
 from briefing.services.baseline.civic import fetch_google_civic_candidates
 from briefing.services.baseline.slco import fetch_slco_candidates
@@ -41,7 +42,7 @@ def run_baseline_extraction(
     sources: list[SourceName] | None = None,
     settings: Settings | None = None,
 ) -> tuple[list[NormalizedCandidate], int]:
-    s = settings or get_settings()
+    s = merge_source_urls_from_db(settings or get_settings())
     want: list[SourceName] = list(sources) if sources else ["vote_utah", "slco", "civic"]
     collected: list[NormalizedCandidate] = []
     if "vote_utah" in want:

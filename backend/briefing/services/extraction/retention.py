@@ -11,6 +11,7 @@ import httpx
 from bs4 import BeautifulSoup, Tag
 
 from briefing.config import Settings, get_settings
+from briefing.services.settings import merge_source_urls_from_db
 
 RETENTION_CATEGORY = "Retention Voting"
 METADATA_SOURCE = "ballotpedia_retention"
@@ -310,7 +311,7 @@ def run_retention_extraction(
     persist: bool = False,
     dry_run: bool = False,
 ) -> tuple[dict[str, list[RetentionEvent]], int]:
-    cfg = settings or get_settings()
+    cfg = merge_source_urls_from_db(settings or get_settings())
     from briefing.services.extraction.judicial import run_ut_supreme_extraction
 
     roster = run_ut_supreme_extraction(fetch_bios=False, dry_run=True, settings=cfg)
