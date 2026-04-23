@@ -1,7 +1,11 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-/** Top-level shells (sign-in redirect or chrome) — fail on new critical axe issues only. */
+/**
+ * Axe on our App Router shell only (`iframes: false` — not Clerk’s embedded account UI).
+ * Gate: **critical** impact only so hosted Clerk redirects (off-origin sign-in) do not fail CI.
+ * For WCAG serious/mod violations on fully rendered operator pages, add a signed-in `storageState` and tighten this assert.
+ */
 const routes = [
   "/",
   "/judicial",
@@ -10,6 +14,7 @@ const routes = [
   "/judicial/district",
   "/judicial/justice-hagen",
   "/officials",
+  "/officials/justice-hagen",
   "/search",
   "/graph",
   "/saved",
@@ -20,10 +25,12 @@ const routes = [
 
 test.describe("axe — top routes", () => {
   for (const path of routes) {
-    test(`no critical violations on ${path}`, async ({ page }) => {
+    test(`no critical violations on app shell ${path}`, async ({ page }) => {
       await page.goto(path);
       await page.waitForLoadState("domcontentloaded");
-      const results = await new AxeBuilder({ page }).analyze();
+      const results = await new AxeBuilder({ page })
+        .options({ iframes: false })
+        .analyze();
       const critical = results.violations.filter((v) => v.impact === "critical");
       expect(critical, JSON.stringify(critical, null, 2)).toEqual([]);
     });

@@ -1,4 +1,4 @@
-# Phase A.10 — GUI + backend checks (Bun + uv). Clerk/Supabase secrets optional; fallbacks allow fork CI.
+# GUI + backend checks (Bun + uv). Phase B.13: Playwright axe + Lighthouse budgets in lighthouserc.cjs (blocking).
 name: GUI CI
 
 on:

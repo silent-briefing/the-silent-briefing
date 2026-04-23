@@ -36,16 +36,55 @@ class ClerkUser:
     org_id: str | None
 
 
+def _normalize_app_role(r: str | None) -> str | None:
+    if isinstance(r, str) and r in ROLE_ORDER:
+        return r
+    return None
+
+
 def _role_from_payload(payload: dict[str, Any]) -> str | None:
+    """User-level role from public_metadata or top-level JWT `role` (Clerk templates)."""
     meta = payload.get("public_metadata")
     if isinstance(meta, dict):
         r = meta.get("role")
         if isinstance(r, str):
-            return r
+            hit = _normalize_app_role(r)
+            if hit:
+                return hit
     r = payload.get("role")
     if isinstance(r, str):
-        return r
+        hit = _normalize_app_role(r)
+        if hit:
+            return hit
     return None
+
+
+def _role_from_clerk_org_admin(payload: dict[str, Any]) -> str | None:
+    """Map Clerk organization admin to app `admin` when org is active on the token."""
+    raw = payload.get("org_role")
+    if isinstance(raw, str):
+        low = raw.strip().lower()
+        if low in ("org:admin", "admin"):
+            return "admin"
+    nested = payload.get("o")
+    if isinstance(nested, dict):
+        rol = nested.get("rol")
+        if isinstance(rol, str) and rol.strip().lower() == "admin":
+            return "admin"
+    return None
+
+
+def effective_app_role_from_payload(payload: dict[str, Any]) -> str | None:
+    """Highest-privilege app role from user metadata and Clerk org admin."""
+    a = _role_from_payload(payload)
+    b = _role_from_clerk_org_admin(payload)
+    if a is None:
+        return b
+    if b is None:
+        return a
+    if ROLE_ORDER[b] > ROLE_ORDER[a]:
+        return b
+    return a
 
 
 def _org_id_from_payload(payload: dict[str, Any]) -> str | None:
@@ -98,7 +137,7 @@ async def require_clerk_user(
         raise HTTPException(status_code=401, detail="Token missing sub")
     return ClerkUser(
         sub=sub,
-        role=_role_from_payload(payload),
+        role=effective_app_role_from_payload(payload),
         org_id=_org_id_from_payload(payload),
     )
 

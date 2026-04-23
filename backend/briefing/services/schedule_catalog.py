@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -103,3 +104,10 @@ def format_schedule_catalog() -> str:
 
 def print_schedule_catalog() -> None:
     print(format_schedule_catalog(), end="")
+
+
+def get_catalog() -> list[dict[str, Any]]:
+    """Machine-readable list of jobs allowed for `POST /v1/admin/runs/trigger` (Phase C.4)."""
+    from briefing.services.admin_worker_trigger import get_trigger_catalog
+
+    return get_trigger_catalog()

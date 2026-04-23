@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -91,6 +91,47 @@ def test_persist_pipeline_runs_four_inserts() -> None:
     assert last_call["groundedness_score"] == 0.81
     assert last_call["requires_human_review"] is False
     assert last_call["raw_response"]["stage"] == "synthesize"
+
+
+@patch("supabase.create_client")
+def test_persist_writes_dossier_claim_for_review(mock_create: MagicMock) -> None:
+    llm = _SeqLLM(
+        [
+            '{"evidence_items":[],"summary":""}',
+            "draft",
+            '{"issues":[],"unsupported_claims":[],"severity":"low"}',
+            '{"final_dossier":"final text","groundedness_score":0.9,"requires_human_review":true}',
+        ]
+    )
+    settings = Settings(perplexity_api_key="x", supabase_url="http://x", supabase_service_role_key="k")
+    tables: dict[str, MagicMock] = {}
+
+    def table(name: str) -> MagicMock:
+        if name not in tables:
+            t = MagicMock()
+            ins = MagicMock()
+            ins.execute.return_value = MagicMock(data=[{"id": "run-1"}])
+            t.insert.return_value = ins
+            tables[name] = t
+        return tables[name]
+
+    client = MagicMock()
+    client.table.side_effect = table
+    mock_create.return_value = client
+
+    run_adversarial_dossier_pipeline(
+        llm,
+        subject_brief="test",
+        official_id="22222222-2222-2222-2222-222222222222",
+        persist=True,
+        dry_run=False,
+        settings=settings,
+    )
+    assert "dossier_claims" in tables
+    claim_call = tables["dossier_claims"].insert.call_args[0][0]
+    assert claim_call["requires_human_review"] is True
+    assert claim_call["category"] == "Adversarial synthesis"
+    assert "critique_json" in claim_call["metadata"]
 
 
 def test_persist_requires_official_id() -> None:

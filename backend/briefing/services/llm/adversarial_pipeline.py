@@ -208,6 +208,33 @@ def persist_pipeline_runs(
     return ids
 
 
+def insert_dossier_claim_for_adversarial_review(
+    client: SupportsIntelligenceRuns,
+    *,
+    official_id: str,
+    final_dossier: str,
+    critique_json: str,
+    groundedness_score: float,
+    requires_human_review: bool,
+) -> None:
+    """Surface synthesis in `dossier_claims` so the admin review queue can pick it up."""
+    row: dict[str, Any] = {
+        "official_id": official_id,
+        "claim_text": final_dossier,
+        "category": "Adversarial synthesis",
+        "pipeline_stage": "writer_sonar",
+        "published": False,
+        "requires_human_review": requires_human_review,
+        "groundedness_score": groundedness_score,
+        "metadata": {
+            "adversarial_pipeline": True,
+            "critique_json": critique_json,
+        },
+        "source_url": None,
+    }
+    client.table("dossier_claims").insert(row).execute()
+
+
 def run_adversarial_dossier_pipeline(
     llm: LLMService,
     *,
@@ -254,6 +281,14 @@ def run_adversarial_dossier_pipeline(
             groundedness_score=g_score,
             requires_human_review=review,
             settings=s,
+        )
+        insert_dossier_claim_for_adversarial_review(
+            client,
+            official_id=official_id,
+            final_dossier=final_text,
+            critique_json=critique,
+            groundedness_score=g_score,
+            requires_human_review=review,
         )
 
     return AdversarialPipelineResult(
